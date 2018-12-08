@@ -1,6 +1,7 @@
 package com.android.mazhengyang.minichat.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.User;
+import com.android.mazhengyang.minichat.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +35,7 @@ public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.context = context;
     }
 
-    public void update(List<User> list) {
+    public void updateUserMap(List<User> list) {
         this.list = list;
         this.notifyDataSetChanged();
     }
@@ -49,9 +51,23 @@ public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         User user = list.get(position);
+        if (user != null) {
+            String name = user.getUserName();
+            String ip = user.getUserIp();
 
-        ((UserItemViewHolder) holder).tvPerson.setText(user.getUserName());
-        ((UserItemViewHolder) holder).tvIp.setText(user.getIp());
+            if (user.isOnline()) {
+                ((UserItemViewHolder) holder).tvUserName.setTextColor(Color.BLACK);
+            } else {
+                ((UserItemViewHolder) holder).tvUserName.setTextColor(Color.GRAY);
+            }
+
+            if (ip.equals(Utils.getLocalIpAddress())) {
+                ((UserItemViewHolder) holder).tvUserName.setText(name + "(自己)");
+            } else {
+                ((UserItemViewHolder) holder).tvUserName.setText(name);
+            }
+            ((UserItemViewHolder) holder).tvUserIp.setText(ip);
+        }
     }
 
     @Override
@@ -61,10 +77,10 @@ public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public class UserItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        @BindView(R.id.tvPerson)
-        TextView tvPerson;
-        @BindView(R.id.tvIp)
-        TextView tvIp;
+        @BindView(R.id.tvUserName)
+        TextView tvUserName;
+        @BindView(R.id.tvUserIp)
+        TextView tvUserIp;
 
         public UserItemViewHolder(View itemView) {
             super(itemView);

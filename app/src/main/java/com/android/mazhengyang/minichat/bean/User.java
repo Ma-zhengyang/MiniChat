@@ -7,21 +7,12 @@ import java.io.Serializable;
  */
 
 public class User implements Serializable {
-    private static final long serialVersionUID = -5062775818842005386L;
 
     private String userName;    // 用户名
-    private String ip;            //ip地址
-    private String mac;            //MAC地址
+    private String userIp;      //ip地址
     private String deviceCode;//手机设备码
-    private String heartTime;//记录心跳包的最后一次时间
-    private boolean refreshIcon;//记录是否刷新头像（登录第一次会刷新头像）
-
-    public static final int INTERVAL = 10 * 1000;//心跳包间隔时间
-    public static final int TIMEOUT = (int) (2.1 * INTERVAL);//超时时间
-
-    public User() {
-        heartTime = System.currentTimeMillis() + "";
-    }
+    private boolean isOnline;
+    private boolean isSelf;
 
     public String getUserName() {
         return userName;
@@ -31,20 +22,12 @@ public class User implements Serializable {
         this.userName = userName;
     }
 
-    public String getIp() {
-        return ip;
+    public String getUserIp() {
+        return userIp;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public String getMac() {
-        return mac;
-    }
-
-    public void setMac(String mac) {
-        this.mac = mac;
+    public void setUserIp(String userIp) {
+        this.userIp = userIp;
     }
 
     public String getDeviceCode() {
@@ -55,28 +38,19 @@ public class User implements Serializable {
         this.deviceCode = deviceCode;
     }
 
-    public String getHeartTime() {
-        return heartTime;
+    public boolean isOnline() {
+        return isOnline;
     }
 
-    public void setHeartTime(String heartTime) {
-        this.heartTime = heartTime;
+    public void setOnline(boolean online) {
+        isOnline = online;
     }
 
-    public boolean isRefreshIcon() {
-        return refreshIcon;
+    public boolean isSelf() {
+        return isSelf;
     }
 
-    public void setRefreshIcon(boolean refreshIcon) {
-        this.refreshIcon = refreshIcon;
-    }
-
-    /**
-     * 用来验证对方是否在线
-     *
-     * @return
-     */
-    public boolean checkOnline() {
-        return !(System.currentTimeMillis() - Long.valueOf(heartTime) > TIMEOUT);
+    public void setSelf(boolean self) {
+        isSelf = self;
     }
 }

@@ -1,156 +1,137 @@
 package com.android.mazhengyang.minichat;
 
-import android.content.ComponentName;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.mazhengyang.minichat.adapter.UserAdapter;
 import com.android.mazhengyang.minichat.bean.User;
-import com.android.mazhengyang.minichat.service.ChatService;
-import com.scwang.smartrefresh.layout.api.RefreshLayout;
-import com.scwang.smartrefresh.layout.constant.SpinnerStyle;
-import com.scwang.smartrefresh.layout.footer.BallPulseFooter;
-import com.scwang.smartrefresh.layout.header.ClassicsHeader;
+import com.android.mazhengyang.minichat.fragment.UserListFragment;
+import com.android.mazhengyang.minichat.util.Utils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements ChatService.ChatServiceListener {
+public class MainActivity extends AppCompatActivity implements UdpThread.Callback {
 
     private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
 
-    private static final int SHOW_MSG = 1024;
-    private static final int UPDATA_USERMAP = 1025;
+    public static final int MESSAGE_UPDATE_USER_LIST = 1024;
 
-    private List<User> list = new ArrayList<>();
+    private NetWorkStateReceiver netWorkStateReceiver;
 
-    private ChatService chatService;
-    private Connection connection;
+    private Handler handler = new MainHandler();
+    private UdpThread udpThread;
 
-    private UserAdapter userAdapter;
-    private BaseHandler baseHandler;
-
-    @BindView(R.id.refreshLayout)
-    RefreshLayout refreshLayout;
-    @BindView(R.id.recyclerView)
-    RecyclerView recyclerView;
+    private UserListFragment userListFragment;
+    private Fragment currentFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        baseHandler = new BaseHandler();
+        udpThread = UdpThread.getInstance(this);
 
-        initView();
-        initService();
+        netWorkStateReceiver = new NetWorkStateReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(netWorkStateReceiver, intentFilter);
+
+        userListFragment = new UserListFragment();
+        showFragment(userListFragment);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        boolean isWifiConnected = Utils.isWifiConnected(this);
+        Log.d(TAG, "onResume: isWifiConnected=" + isWifiConnected);
+        if (isWifiConnected) {
+            udpThread.startRun();
+        } else {
+            Toast.makeText(this, R.string.wifi_unconnected, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "onPause: ");
+        super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy: ");
         super.onDestroy();
-        if (chatService != null) {
-            unbindService(connection);
+        udpThread.release();
+        unregisterReceiver(netWorkStateReceiver);
+        handler.removeCallbacksAndMessages(null);
+    }
+
+    private void showFragment(Fragment fragment) {
+
+        if (fragment != null && fragment != currentFragment) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_main, fragment)
+                    .show(fragment)
+                    .commit();
+            currentFragment = fragment;
         }
-    }
-
-    private void initView() {
-        Log.d(TAG, "initView: ");
-
-        refreshLayout.setRefreshHeader(new ClassicsHeader(this));
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        userAdapter = new UserAdapter(this);
-        recyclerView.setAdapter(userAdapter);
-    }
-
-    private void initService() {
-        Log.d(TAG, "initService: ");
-        Intent intent = new Intent(this, ChatService.class);
-        connection = new Connection();
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
-    public void updateUserMap(Map<String, User> userMap) {
-        if (chatService != null) {
-
-            list.clear();
-
-            Set<Map.Entry<String, User>> set = userMap.entrySet();
-
-            for (Map.Entry<String, User> entry : set) {
-                User user = entry.getValue();
-                Log.d(TAG, "onReceive: add " + user.getUserName() + ", " + user.getIp());
-                list.add(user);
-            }
-
-            Message message = new Message();
-            message.what = UPDATA_USERMAP;
-            baseHandler.sendMessage(message);
-        }
+    public void updateUserMap(List<User> userList) {
+        Message message = new Message();
+        message.what = MESSAGE_UPDATE_USER_LIST;
+        message.obj = userList;
+        handler.sendMessage(message);
     }
 
-    private class BaseHandler extends Handler {
+    private class MainHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            // TODO Auto-generated method stub
+            super.handleMessage(msg);
+            Log.d(TAG, "handleMessage: msg.what=" + msg.what);
             switch (msg.what) {
-                case SHOW_MSG:
-                    Toast.makeText(MainActivity.this, (String) msg.obj, Toast.LENGTH_SHORT).show();
+                case MESSAGE_UPDATE_USER_LIST:
+                    if (currentFragment == userListFragment) {
+                        userListFragment.updateUserMap((List<User>) msg.obj);
+                    }
                     break;
-                case UPDATA_USERMAP:
-                    userAdapter.update(list);
+                default:
                     break;
             }
         }
     }
 
-    @Override
-    public void showMsg(String msg) {
-        Log.d(TAG, "showMsg: msg=" + msg);
-        Message message = new Message();
-        message.what = SHOW_MSG;
-        message.obj = msg;
-        baseHandler.sendMessage(message);
-    }
-
-    public class Connection implements ServiceConnection {
-
+    private class NetWorkStateReceiver extends BroadcastReceiver {
         @Override
-        public void onServiceConnected(ComponentName name, IBinder binder) {
-            Log.d(TAG, "onServiceConnected: ");
-            chatService = ((ChatService.ChatServiceBinder) binder).getService();
-            chatService.setChatServiceListener(MainActivity.this);
-            chatService.start();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.d(TAG, "onServiceDisconnected: ");
-            chatService = null;
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d(TAG, "onReceive: " + action);
+            if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+                boolean isWifiConnected = Utils.isWifiConnected(MainActivity.this);
+                Log.d(TAG, "onReceive: isWifiConnected=" + isWifiConnected);
+                if (isWifiConnected) {
+                    udpThread.startRun();
+                } else {
+                    udpThread.stopRun();
+                }
+            }
         }
     }
 

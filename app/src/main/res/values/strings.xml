@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MiniChat</string>
+
+    <string name="wifi_unconnected">连接失败，请检查Wifi状态</string>
 </resources>
