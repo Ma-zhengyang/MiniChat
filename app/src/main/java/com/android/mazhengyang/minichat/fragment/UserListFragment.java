@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -12,8 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.adapter.UserAdapter;
-import com.android.mazhengyang.minichat.bean.User;
+import com.android.mazhengyang.minichat.adapter.UserListAdapter;
+import com.android.mazhengyang.minichat.bean.UserBean;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class UserListFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + UserListFragment.class.getSimpleName();
 
-    private UserAdapter userAdapter;
+    private UserListAdapter userListAdapter;
 
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
@@ -50,9 +51,10 @@ public class UserListFragment extends Fragment {
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        userListAdapter = new UserListAdapter(context);
         recyclerView.setLayoutManager(layoutManager);
-        userAdapter = new UserAdapter(context);
-        recyclerView.setAdapter(userAdapter);
+        recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
+        recyclerView.setAdapter(userListAdapter);
 
         return view;
     }
@@ -69,7 +71,14 @@ public class UserListFragment extends Fragment {
         super.onDestroy();
     }
 
-    public void updateUserMap(List<User> list) {
-        userAdapter.updateUserMap(list);
+    @Override
+    public void setArguments(Bundle args) {
+        Log.d(TAG, "setArguments: ");
+        super.setArguments(args);
     }
+
+    public void fresh(List<UserBean> list) {
+        userListAdapter.freshUserList(list);
+    }
+
 }

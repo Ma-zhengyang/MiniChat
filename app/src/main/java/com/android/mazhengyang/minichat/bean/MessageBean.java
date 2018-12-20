@@ -1,4 +1,4 @@
-package com.android.mazhengyang.minichat.model;
+package com.android.mazhengyang.minichat.bean;
 
 import android.util.Base64;
 
@@ -9,7 +9,7 @@ import org.json.JSONObject;
  * Created by mazhengyang on 18-11-27.
  */
 
-public class UDPMessage {
+public class MessageBean {
 
     private String senderName;    //消息发送者的名字
     private String msg;            //信息内容
@@ -18,17 +18,11 @@ public class UDPMessage {
     private int type;//当前消息的类型
     private boolean own;//标识这条消息是否自己发送
 
-    public UDPMessage() {
+    public MessageBean() {
         sendTime = System.currentTimeMillis() + "";
     }
 
-    public UDPMessage(String msg, boolean own) {
-        this();
-        this.msg = msg;
-        this.own = own;
-    }
-
-    public UDPMessage(JSONObject object) throws JSONException {
+    public MessageBean(JSONObject object) throws JSONException {
         senderName = new String(Base64.decode(object.getString("senderName").getBytes(), Base64.DEFAULT));
         msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
 
@@ -41,7 +35,6 @@ public class UDPMessage {
      * 采用JSONObject数据结构
      */
     public String toString() {
-//		SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
         JSONObject object = new JSONObject();
         try {
             object.put("senderName", Base64.encodeToString(senderName.getBytes(), Base64.DEFAULT));

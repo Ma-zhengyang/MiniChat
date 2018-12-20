@@ -8,11 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.android.mazhengyang.minichat.MainActivity;
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.bean.User;
+import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.util.Utils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -22,20 +22,20 @@ import butterknife.ButterKnife;
  * Created by mazhengyang on 18-11-27.
  */
 
-public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final String TAG = "MiniChat." + UserAdapter.class.getSimpleName();
+    private static final String TAG = "MiniChat." + UserListAdapter.class.getSimpleName();
 
-    private List<User> list = new ArrayList<>();
+    private List<UserBean> list;
 
     private Context context;
 
-    public UserAdapter(Context context) {
+    public UserListAdapter(Context context) {
         super();
         this.context = context;
     }
 
-    public void updateUserMap(List<User> list) {
+    public void freshUserList(List<UserBean> list) {
         this.list = list;
         this.notifyDataSetChanged();
     }
@@ -43,14 +43,17 @@ public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_child, parent, false);
+                .inflate(R.layout.item_user, parent, false);
         UserItemViewHolder vh = new UserItemViewHolder(v);
         return vh;
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        User user = list.get(position);
+        if (list == null) {
+            return;
+        }
+        UserBean user = list.get(position);
         if (user != null) {
             String name = user.getUserName();
             String ip = user.getUserIp();
@@ -72,6 +75,9 @@ public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
+        if (list == null) {
+            return 0;
+        }
         return list.size();
     }
 
@@ -90,7 +96,7 @@ public class UserAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         @Override
         public void onClick(View v) {
-
+            ((MainActivity) context).onUserItemClick(list.get(this.getPosition()));
         }
     }
 }

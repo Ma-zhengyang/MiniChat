@@ -10,6 +10,6 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        tools:listitem="@layout/item_child"/>
+        tools:listitem="@layout/item_user"/>
 
 </LinearLayout>
