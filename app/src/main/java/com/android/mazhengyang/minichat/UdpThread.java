@@ -128,27 +128,34 @@ public class UdpThread extends Thread {
      * 通知上线
      */
     public void noticeOnline() {
-        Log.d(TAG, "noticeOnline: ");
-        try {
-            send(packUdpMessage("", USER_ONLINE).toString(),
-                    InetAddress.getByName(Constant.ALL_ADDRESS));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            Log.e(TAG, "startRun: " + e);
-        }
+        Log.d(TAG, "noticeOnline: isOnline=" + isOnline);
+//        if (!isOnline) {
+            isOnline = true;
+            try {
+                send(packUdpMessage("", USER_ONLINE).toString(),
+                        InetAddress.getByName(Constant.ALL_ADDRESS));
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                Log.e(TAG, "startRun: " + e);
+            }
+//        }
+
     }
 
     /**
      * 停止
      */
     public void noticeOffline() {
-        Log.d(TAG, "noticeOffline: ");
-        try {
-            send(packUdpMessage("", USER_ONLINE).toString(),
-                    InetAddress.getByName(Constant.ALL_ADDRESS));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            Log.e(TAG, "noticeOffline: " + e);
+        Log.d(TAG, "noticeOffline: isOnline=" + isOnline);
+        if (isOnline) {
+            isOnline = false;
+            try {
+                send(packUdpMessage("", USER_OFFLINE).toString(),
+                        InetAddress.getByName(Constant.ALL_ADDRESS));
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                Log.e(TAG, "noticeOffline: " + e);
+            }
         }
     }
 
@@ -250,10 +257,8 @@ public class UdpThread extends Thread {
                 case MESSAGE_TO_ALL:
                     Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_ALL");
                     if (messages.containsKey(Constant.ALL_ADDRESS)) {
-                        Log.d(TAG, "handleReceivedMsg: 11111111");
                         messages.get(Constant.ALL_ADDRESS).add(udpMessage);//更新现有
                     } else {
-                        Log.d(TAG, "handleReceivedMsg: 22222222");
                         Queue<MessageBean> queue = new ConcurrentLinkedQueue<>();
                         queue.add(udpMessage);
                         messages.put(Constant.ALL_ADDRESS, queue);//新增
@@ -288,6 +293,7 @@ public class UdpThread extends Thread {
      * @param destPort 目标端口
      */
     private void send(final String msg, final InetAddress destIp, final int destPort) {
+        Log.d(TAG, "send: " + executorService);
         executorService.execute(new Runnable() {
             @Override
             public void run() {

@@ -16,6 +16,7 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.UserListAdapter;
 import com.android.mazhengyang.minichat.bean.UserBean;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -29,6 +30,7 @@ public class UserListFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + UserListFragment.class.getSimpleName();
 
+    private List<UserBean> userList;
     private UserListAdapter userListAdapter;
 
     @BindView(R.id.recyclerView)
@@ -51,7 +53,7 @@ public class UserListFragment extends Fragment {
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        userListAdapter = new UserListAdapter(context);
+        userListAdapter = new UserListAdapter(context, userList);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
         recyclerView.setAdapter(userListAdapter);
@@ -78,6 +80,7 @@ public class UserListFragment extends Fragment {
     }
 
     public void fresh(List<UserBean> list) {
+        this.userList = list;
         userListAdapter.freshUserList(list);
     }
 

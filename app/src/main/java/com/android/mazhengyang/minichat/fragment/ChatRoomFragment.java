@@ -37,6 +37,7 @@ public class ChatRoomFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + ChatRoomFragment.class.getSimpleName();
 
+    private Map<String, Queue<MessageBean>> messagesMap;
     private ChatRoomAdapter chatRoomAdapter;
 
     @BindView(R.id.recyclerView)
@@ -64,9 +65,9 @@ public class ChatRoomFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        chatRoomAdapter = new ChatRoomAdapter(context);
+        chatRoomAdapter = new ChatRoomAdapter(context, messagesMap);
         recyclerView.setAdapter(chatRoomAdapter);
-       
+
         sendBtn.setOnClickListener(send);
         sendBtn.setEnabled(false);
         editText.addTextChangedListener(textWatcher);
@@ -110,7 +111,7 @@ public class ChatRoomFragment extends Fragment {
         public void onClick(View v) {
 
             String message = editText.getText().toString().trim();
-            Log.d(TAG, "onClick: message="+message);
+            Log.d(TAG, "onClick: message=" + message);
 
             if (!"".equals(message)) {
                 UdpThread udpThread = UdpThread.getInstance();
@@ -126,8 +127,9 @@ public class ChatRoomFragment extends Fragment {
         }
     };
 
-    public void fresh(Map<String, Queue<MessageBean>> messages) {
-        chatRoomAdapter.freshMessageMap(messages);
+    public void fresh(Map<String, Queue<MessageBean>> messagesMap) {
+        this.messagesMap = messagesMap;
+        chatRoomAdapter.freshMessageMap(messagesMap);
     }
 
 }

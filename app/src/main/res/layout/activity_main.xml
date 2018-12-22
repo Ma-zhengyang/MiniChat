@@ -3,12 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <FrameLayout
-        android:id="@+id/fragment_main"
+        android:id="@+id/fragment_content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
     </FrameLayout>
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        app:itemBackground="@color/lightGray"
+        app:itemTextColor="@color/deepGray"
+        app:menu="@menu/bottom_nav_menu">
+
+    </android.support.design.widget.BottomNavigationView>
 
 </LinearLayout>

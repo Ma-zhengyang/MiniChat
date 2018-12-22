@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements UdpThread.Callback {
@@ -40,6 +42,9 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     private UserListFragment userListFragment;
     private ChatRoomFragment chatRoomFragment;
     private Fragment currentFragment;
+
+    @BindView(R.id.bottom_nav)
+    BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
     @Override
     public void onBackPressed() {
-        if(currentFragment == chatRoomFragment){
+        if (currentFragment != userListFragment) {
             showFragment(userListFragment);
             return;
         }
@@ -101,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         if (fragment != null && fragment != currentFragment) {
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.fragment_main, fragment)
+                    .replace(R.id.fragment_content, fragment)
                     .show(fragment)
                     .commit();
             currentFragment = fragment;

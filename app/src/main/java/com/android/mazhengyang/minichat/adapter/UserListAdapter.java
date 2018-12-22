@@ -3,9 +3,11 @@ package com.android.mazhengyang.minichat.adapter;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.MainActivity;
@@ -30,18 +32,21 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     private Context context;
 
-    public UserListAdapter(Context context) {
-        super();
+    public UserListAdapter(Context context, List<UserBean> list) {
+        Log.d(TAG, "UserListAdapter: ");
         this.context = context;
+        this.list = list;
     }
 
     public void freshUserList(List<UserBean> list) {
+        Log.d(TAG, "freshUserList: ");
         this.list = list;
         this.notifyDataSetChanged();
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        Log.d(TAG, "onCreateViewHolder: ");
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_user, parent, false);
         UserItemViewHolder vh = new UserItemViewHolder(v);
@@ -53,6 +58,7 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if (list == null) {
             return;
         }
+
         UserBean user = list.get(position);
         if (user != null) {
             String name = user.getUserName();
@@ -65,8 +71,10 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             }
 
             if (ip.equals(Utils.getLocalIpAddress())) {
-                ((UserItemViewHolder) holder).tvUserName.setText(name + "(自己)");
+                ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
+                ((UserItemViewHolder) holder).tvUserName.setText(name);
             } else {
+                ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
                 ((UserItemViewHolder) holder).tvUserName.setText(name);
             }
             ((UserItemViewHolder) holder).tvUserIp.setText(ip);
@@ -78,11 +86,14 @@ public class UserListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if (list == null) {
             return 0;
         }
+        Log.d(TAG, "getItemCount: count=" + list.size());
         return list.size();
     }
 
     public class UserItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
+        @BindView(R.id.ivUserIcon)
+        ImageView ivUserIcon;
         @BindView(R.id.tvUserName)
         TextView tvUserName;
         @BindView(R.id.tvUserIp)

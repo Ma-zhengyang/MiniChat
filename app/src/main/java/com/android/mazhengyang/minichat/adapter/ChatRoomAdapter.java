@@ -34,9 +34,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     private Context context;
 
-    public ChatRoomAdapter(Context context) {
-        super();
+    public ChatRoomAdapter(Context context, Map<String, Queue<MessageBean>> messagesMap) {
+        Log.d(TAG, "ChatRoomAdapter: ");
         this.context = context;
+        //  this.messagesMap = messagesMap;
+
     }
 
     public void freshMessageMap(Map<String, Queue<MessageBean>> messagesMap) {
@@ -61,6 +63,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        Log.d(TAG, "onCreateViewHolder: ");
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_message, parent, false);
         ChatRoomAdapter.UserItemViewHolder vh = new ChatRoomAdapter.UserItemViewHolder(v);
@@ -69,15 +72,18 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-
+        if (messageList == null) {
+            return;
+        }
         MessageBean messageBean = messageList.get(position);
-        Log.d(TAG, "onBindViewHolder: positon=" + position + ", message=" + messageBean.getMsg());
-
         ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMsg());
     }
 
     @Override
     public int getItemCount() {
+        if (messageList == null) {
+            return 0;
+        }
         int count = messageList.size();
         Log.d(TAG, "getItemCount: " + count);
         return count;

@@ -3,4 +3,8 @@
 
     <string name="wifi_unconnected">连接失败，请检查Wifi状态</string>
     <string name="send_msg">发送</string>
+
+    <string name="nav_liaotian">聊天</string>
+    <string name="nav_tongxunlu">通讯录</string>
+    <string name="nav_wo">我</string>
 </resources>
