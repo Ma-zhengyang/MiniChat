@@ -36,7 +36,7 @@ public class UdpThread extends Thread {
 
     public static final int USER_ONLINE = 1000;//上线
     public static final int USER_OFFLINE = 1001;//下线
-    public static final int LOGIN_SUCC = 1002;//增加用户成功
+    public static final int SELF_ONLINED = 1002;//增加用户成功
     public static final int MESSAGE_TO_ALL = 1003;
 
     private boolean isOnline;
@@ -130,14 +130,14 @@ public class UdpThread extends Thread {
     public void noticeOnline() {
         Log.d(TAG, "noticeOnline: isOnline=" + isOnline);
 //        if (!isOnline) {
-            isOnline = true;
-            try {
-                send(packUdpMessage("", USER_ONLINE).toString(),
-                        InetAddress.getByName(Constant.ALL_ADDRESS));
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-                Log.e(TAG, "startRun: " + e);
-            }
+        isOnline = true;
+        try {
+            send(packUdpMessage("", USER_ONLINE).toString(),
+                    InetAddress.getByName(Constant.ALL_ADDRESS));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            Log.e(TAG, "startRun: " + e);
+        }
 //        }
 
     }
@@ -167,8 +167,10 @@ public class UdpThread extends Thread {
 
         noticeOffline();
         interrupt();
-        executorService.shutdown();
-        executorService = null;
+        if (executorService != null) {
+            executorService.shutdown();
+            executorService = null;
+        }
         instance = null;
         isOnline = false;
     }
@@ -222,7 +224,7 @@ public class UdpThread extends Thread {
 
                     //如果是对方发过来的USER_ONLINE信息，回馈对方，把自己加入对方用户列表
                     if (!selfIp.equals(targetIp)) {
-                        send(packUdpMessage("", LOGIN_SUCC).toString(), packet.getAddress());
+                        send(packUdpMessage("", SELF_ONLINED).toString(), packet.getAddress());
                     }
 
                     if (callback != null) {
@@ -242,8 +244,8 @@ public class UdpThread extends Thread {
                     }
                     break;
                 //在对方登陆成功后返回的验证消息
-                case LOGIN_SUCC:
-                    Log.d(TAG, "handleReceivedMsg: LOGIN_SUCC");
+                case SELF_ONLINED:
+                    Log.d(TAG, "handleReceivedMsg: SELF_ONLINED");
                     UserBean user = new UserBean();
                     user.setUserIp(targetIp);
                     user.setUserName(udpMessage.getSenderName());

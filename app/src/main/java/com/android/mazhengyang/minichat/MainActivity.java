@@ -8,17 +8,21 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.fragment.ChatRoomFragment;
+import com.android.mazhengyang.minichat.fragment.MeFragment;
 import com.android.mazhengyang.minichat.fragment.UserListFragment;
 import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
     private UserListFragment userListFragment;
     private ChatRoomFragment chatRoomFragment;
+    private MeFragment meFragment;
     private Fragment currentFragment;
 
     @BindView(R.id.bottom_nav)
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
+        ChangeModeController.getInstance().init(this,R.attr.class);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -62,6 +68,17 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
         userListFragment = new UserListFragment();
         showFragment(userListFragment);
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        String id = item.getTitle().toString();
+                        Log.d(TAG, "onNavigationItemSelected: id=" + id);
+                        return true;
+                    }
+                });
+
     }
 
     @Override
@@ -90,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         udpThread.release();
         unregisterReceiver(netWorkStateReceiver);
         handler.removeCallbacksAndMessages(null);
+        ChangeModeController.onDestory();
     }
 
     @Override
