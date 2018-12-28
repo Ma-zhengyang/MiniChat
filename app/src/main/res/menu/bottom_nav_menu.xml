@@ -2,8 +2,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:title="@string/nav_liaotian" />
-    <item android:title="@string/nav_tongxunlu" />
-    <item android:title="@string/nav_wo" />
+    <item
+        android:id="@+id/nav_id_chatroom"
+        android:enabled="true"
+        android:title="@string/nav_chatroom"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/nav_id_userlist"
+        android:enabled="true"
+        android:title="@string/nav_userlist"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/nav_id_self"
+        android:enabled="true"
+        android:title="@string/nav_self"
+        app:showAsAction="ifRoom" />
 
 </menu>

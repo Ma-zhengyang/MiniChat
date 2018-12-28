@@ -16,6 +16,7 @@ import android.os.Build;
 import android.support.v4.view.LayoutInflaterCompat;
 import android.support.v4.view.LayoutInflaterFactory;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
+import com.android.mazhengyang.minichat.fragment.MeFragment;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -32,6 +34,9 @@ import java.util.List;
  * 夜间模式控制器
  */
 public class ChangeModeController {
+
+    private static final String TAG = "MiniChat." + ChangeModeController.class.getSimpleName();
+
     /**
      * 属性背景
      */
@@ -95,6 +100,9 @@ public class ChangeModeController {
             public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
                 View view = null;
                 try {
+
+                    Log.d(TAG, "init: name=" + name);
+
                     if (name.indexOf('.') == -1) {
                         if ("View".equals(name)) {
                             view = LayoutInflater.from(context).createView(name, "android.view.", attrs);
@@ -105,6 +113,9 @@ public class ChangeModeController {
                         if (view == null) {
                             view = LayoutInflater.from(context).createView(name, "android.webkit.", attrs);
                         }
+                        if (view == null) {
+                            view = LayoutInflater.from(context).createView(name, "android.support.design.widget.", attrs);
+                        }
 
                     } else {
                         if (view == null) {
@@ -112,9 +123,13 @@ public class ChangeModeController {
                         }
                     }
                     if (view != null) {
-                        // Log.e("TAG", "name = " + name);
+
+                        Log.d(TAG, "name=" + name);
+
                         for (int i = 0; i < attrs.getAttributeCount(); i++) {
-//                            Log.e("TAG", attrs.getAttributeName(i) + " , " + attrs.getAttributeValue(i));
+
+                            Log.d(TAG, attrs.getAttributeName(i) + " , " + attrs.getAttributeValue(i));
+
                             if (attrs.getAttributeName(i).equals(ATTR_BACKGROUND)) {
                                 mBackGroundViews.add(new AttrEntity<View>(view, getAttr(mClass, attrs.getAttributeValue(i))));
                             }
@@ -207,7 +222,11 @@ public class ChangeModeController {
      * @param style 切换style
      */
     public static void changeDay(Activity ctx, int style) {
-        if (mBackGroundDrawableViews == null || mOneTextColorViews == null || mTwoTextColorViews == null || mThreeTextColorViews == null || mBackGroundViews == null) {
+        if (mBackGroundDrawableViews == null
+                || mOneTextColorViews == null
+                || mTwoTextColorViews == null
+                || mThreeTextColorViews == null
+                || mBackGroundViews == null) {
             throw new RuntimeException("请先调用init()初始化方法!");
         }
         ChangeModeHelper.setChangeMode(ctx, ChangeModeHelper.MODE_DAY);

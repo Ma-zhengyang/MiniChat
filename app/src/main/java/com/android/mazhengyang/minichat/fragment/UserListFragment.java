@@ -11,12 +11,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.UserListAdapter;
 import com.android.mazhengyang.minichat.bean.UserBean;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -33,6 +33,8 @@ public class UserListFragment extends Fragment {
     private List<UserBean> userList;
     private UserListAdapter userListAdapter;
 
+    @BindView(R.id.tv_head)
+    TextView tvHead;
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
 
@@ -46,8 +48,10 @@ public class UserListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: ");
-        View view = inflater.inflate(R.layout.fragment_list, null);
+        View view = inflater.inflate(R.layout.fragment_userlist, null);
         ButterKnife.bind(this, view);
+
+        tvHead.setText(R.string.nav_userlist);
 
         Context context = getContext();
 

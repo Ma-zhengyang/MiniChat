@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.UdpThread;
@@ -40,6 +41,8 @@ public class ChatRoomFragment extends Fragment {
     private Map<String, Queue<MessageBean>> messagesMap;
     private ChatRoomAdapter chatRoomAdapter;
 
+    @BindView(R.id.tv_head)
+    TextView tvHead;
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
     @BindView(R.id.chatroom_edittext)
@@ -59,6 +62,8 @@ public class ChatRoomFragment extends Fragment {
         Log.d(TAG, "onCreateView: ");
         View view = inflater.inflate(R.layout.fragment_chatroom, null);
         ButterKnife.bind(this, view);
+
+        tvHead.setText(R.string.app_name);
 
         Context context = getContext();
 

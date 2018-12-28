@@ -23,6 +23,7 @@ import com.android.mazhengyang.minichat.fragment.MeFragment;
 import com.android.mazhengyang.minichat.fragment.UserListFragment;
 import com.android.mazhengyang.minichat.util.Utils;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
+import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
 
 import java.util.List;
 import java.util.Map;
@@ -54,10 +55,16 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
-        ChangeModeController.getInstance().init(this,R.attr.class);
+        ChangeModeController.getInstance().init(this, R.attr.class);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        initView();
+
+        if (ChangeModeHelper.getChangeMode(this) == ChangeModeHelper.MODE_NIGHT) {
+            ChangeModeController.changeNight(this, R.style.NightTheme);
+        }
 
         udpThread = UdpThread.getInstance();
 
@@ -68,17 +75,6 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
         userListFragment = new UserListFragment();
         showFragment(userListFragment);
-
-        bottomNavigationView.setOnNavigationItemSelectedListener(
-                new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                        String id = item.getTitle().toString();
-                        Log.d(TAG, "onNavigationItemSelected: id=" + id);
-                        return true;
-                    }
-                });
-
     }
 
     @Override
@@ -117,6 +113,37 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
             return;
         }
         super.onBackPressed();
+    }
+
+    private void initView() {
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        int id = item.getItemId();
+                        switch (id) {
+                            case R.id.nav_id_chatroom:
+                                if (chatRoomFragment == null) {
+                                    chatRoomFragment = new ChatRoomFragment();
+                                }
+                                showFragment(chatRoomFragment);
+                                break;
+                            case R.id.nav_id_userlist:
+                                if (userListFragment == null) {
+                                    userListFragment = new UserListFragment();
+                                }
+                                showFragment(userListFragment);
+                                break;
+                            case R.id.nav_id_self:
+                                if (meFragment == null) {
+                                    meFragment = new MeFragment();
+                                }
+                                showFragment(meFragment);
+                                break;
+                        }
+                        return true;
+                    }
+                });
     }
 
     private void showFragment(Fragment fragment) {
