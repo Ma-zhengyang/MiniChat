@@ -101,7 +101,7 @@ public class ChangeModeController {
                 View view = null;
                 try {
 
-                    Log.d(TAG, "init: name=" + name);
+//                    Log.d(TAG, "init: name=" + name);
 
                     if (name.indexOf('.') == -1) {
                         if ("View".equals(name)) {
@@ -124,11 +124,11 @@ public class ChangeModeController {
                     }
                     if (view != null) {
 
-                        Log.d(TAG, "name=" + name);
+//                        Log.d(TAG, "name=" + name);
 
                         for (int i = 0; i < attrs.getAttributeCount(); i++) {
 
-                            Log.d(TAG, attrs.getAttributeName(i) + " , " + attrs.getAttributeValue(i));
+//                            Log.d(TAG, attrs.getAttributeName(i) + " , " + attrs.getAttributeValue(i));
 
                             if (attrs.getAttributeName(i).equals(ATTR_BACKGROUND)) {
                                 mBackGroundViews.add(new AttrEntity<View>(view, getAttr(mClass, attrs.getAttributeValue(i))));

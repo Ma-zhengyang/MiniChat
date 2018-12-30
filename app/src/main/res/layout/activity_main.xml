@@ -21,7 +21,8 @@
         android:layout_height="50dp"
         app:itemBackground="@color/lightGray"
         app:itemTextColor="@color/deepGray"
-        app:menu="@menu/bottom_nav_menu">
+        app:menu="@menu/bottom_nav_menu"
+        app:dayNightBackgroundAttr="dayNightBackground">
 
     </android.support.design.widget.BottomNavigationView>
 

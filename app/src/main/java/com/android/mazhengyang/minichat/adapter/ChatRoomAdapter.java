@@ -12,6 +12,7 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.util.Constant;
+import com.android.mazhengyang.minichat.util.NetUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,21 +38,22 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public ChatRoomAdapter(Context context, Map<String, Queue<MessageBean>> messagesMap) {
         Log.d(TAG, "ChatRoomAdapter: ");
         this.context = context;
-        //  this.messagesMap = messagesMap;
-
+//          this.messagesMap = messagesMap;
     }
 
     public void freshMessageMap(Map<String, Queue<MessageBean>> messagesMap) {
 
         Log.d(TAG, "freshMessageMap: ");
 
-        Queue<MessageBean> queue = messagesMap.get(Constant.ALL_ADDRESS);
+        String selfIp = NetUtils.getLocalIpAddress();
+
+        Queue<MessageBean> queue = messagesMap.get(selfIp);
         if (queue != null) {
             Iterator<MessageBean> iterator = queue.iterator();
             while (iterator.hasNext()) {
                 MessageBean message = iterator.next();
                 switch (message.getType()) {
-                    case UdpThread.MESSAGE_TO_ALL:
+                    case UdpThread.MESSAGE_TO_TARGET:
                         messageList.add(message);
                         break;
                 }
@@ -73,6 +75,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (messageList == null) {
+            Log.d(TAG, "onBindViewHolder: messageList is null");
             return;
         }
         MessageBean messageBean = messageList.get(position);

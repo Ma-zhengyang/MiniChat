@@ -14,14 +14,16 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.fragment.ChatHistoryFragment;
 import com.android.mazhengyang.minichat.fragment.ChatRoomFragment;
 import com.android.mazhengyang.minichat.fragment.MeFragment;
 import com.android.mazhengyang.minichat.fragment.UserListFragment;
-import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
 
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     private UdpThread udpThread;
 
     private UserListFragment userListFragment;
+    private ChatHistoryFragment chatHistoryFragment;
     private ChatRoomFragment chatRoomFragment;
     private MeFragment meFragment;
     private Fragment currentFragment;
@@ -79,9 +82,10 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
     @Override
     protected void onResume() {
+        Log.d(TAG, "onResume: ");
         super.onResume();
 
-        boolean isWifiConnected = Utils.isWifiConnected(this);
+        boolean isWifiConnected = NetUtils.isWifiConnected(this);
         Log.d(TAG, "onResume: isWifiConnected=" + isWifiConnected);
         if (isWifiConnected) {
             udpThread.startRun(this);
@@ -122,11 +126,11 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         int id = item.getItemId();
                         switch (id) {
-                            case R.id.nav_id_chatroom:
-                                if (chatRoomFragment == null) {
-                                    chatRoomFragment = new ChatRoomFragment();
+                            case R.id.nav_id_chat_history:
+                                if (chatHistoryFragment == null) {
+                                    chatHistoryFragment = new ChatHistoryFragment();
                                 }
-                                showFragment(chatRoomFragment);
+                                showFragment(chatHistoryFragment);
                                 break;
                             case R.id.nav_id_userlist:
                                 if (userListFragment == null) {
@@ -149,6 +153,13 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     private void showFragment(Fragment fragment) {
 
         if (fragment != null && fragment != currentFragment) {
+
+            if (fragment == chatRoomFragment) {
+                bottomNavigationView.setVisibility(View.GONE);
+            } else {
+                bottomNavigationView.setVisibility(View.VISIBLE);
+            }
+
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_content, fragment)
@@ -184,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
             String action = intent.getAction();
             Log.d(TAG, "onReceive: " + action);
             if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-                boolean isWifiConnected = Utils.isWifiConnected(MainActivity.this);
+                boolean isWifiConnected = NetUtils.isWifiConnected(MainActivity.this);
                 Log.d(TAG, "onReceive: isWifiConnected=" + isWifiConnected);
                 if (isWifiConnected) {
                     udpThread.startRun(MainActivity.this);
@@ -212,9 +223,11 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     }
 
     public void onUserItemClick(UserBean user) {
+
         if (chatRoomFragment == null) {
             chatRoomFragment = new ChatRoomFragment();
         }
+        chatRoomFragment.setUserBean(user);
         showFragment(chatRoomFragment);
     }
 }

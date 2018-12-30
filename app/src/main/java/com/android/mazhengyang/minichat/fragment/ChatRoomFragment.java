@@ -20,6 +20,7 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.adapter.ChatRoomAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
+import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.util.Constant;
 
 import java.net.InetAddress;
@@ -38,6 +39,7 @@ public class ChatRoomFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + ChatRoomFragment.class.getSimpleName();
 
+    private UserBean userBean;
     private Map<String, Queue<MessageBean>> messagesMap;
     private ChatRoomAdapter chatRoomAdapter;
 
@@ -49,6 +51,11 @@ public class ChatRoomFragment extends Fragment {
     EditText editText;
     @BindView(R.id.chatroom_sendbtn)
     Button sendBtn;
+
+    public void setUserBean(UserBean userBean) {
+        Log.d(TAG, "setUserBean: ");
+        this.userBean = userBean;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,7 +70,7 @@ public class ChatRoomFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_chatroom, null);
         ButterKnife.bind(this, view);
 
-        tvHead.setText(R.string.app_name);
+        tvHead.setText(userBean.getUserName());
 
         Context context = getContext();
 
@@ -115,14 +122,16 @@ public class ChatRoomFragment extends Fragment {
         @Override
         public void onClick(View v) {
 
+            String ip = userBean.getUserIp();
             String message = editText.getText().toString().trim();
+            Log.d(TAG, "onClick: ip=" + ip);
             Log.d(TAG, "onClick: message=" + message);
 
             if (!"".equals(message)) {
                 UdpThread udpThread = UdpThread.getInstance();
-                MessageBean messageBean = udpThread.packUdpMessage(message, UdpThread.MESSAGE_TO_ALL);
+                MessageBean messageBean = udpThread.packUdpMessage(message, UdpThread.MESSAGE_TO_TARGET/*UdpThread.MESSAGE_TO_ALL*/);
                 try {
-                    udpThread.send(messageBean, InetAddress.getByName(Constant.ALL_ADDRESS));
+                    udpThread.send(messageBean, InetAddress.getByName(ip/*Constant.ALL_ADDRESS*/));
                     editText.setText(null);
                 } catch (UnknownHostException e) {
                     e.printStackTrace();

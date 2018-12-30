@@ -46,4 +46,6 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.7.0'
     //switch button
     compile 'com.github.zcweng:switch-button:0.0.3@aar'
+    //StickyListHeaders
+    compile project(':StickyListHeaders')
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,12 +8,15 @@
 
     <include layout="@layout/head_layout" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <se.emilsjolander.stickylistheaders.StickyListHeadersListView
+        android:id="@+id/stickyListHeadersListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
+        android:drawSelectorOnTop="true"
+        android:fastScrollEnabled="true"
         android:overScrollMode="never"
-        tools:listitem="@layout/item_user" />
+        android:padding="5dp"
+        android:scrollbarStyle="outsideOverlay" />
 
 </LinearLayout>

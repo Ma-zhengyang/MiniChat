@@ -15,9 +15,9 @@ import java.util.Enumeration;
  * Created by mazhengyang on 18-11-28.
  */
 
-public class Utils {
+public class NetUtils {
 
-    private static final String TAG = "MiniChat." + Utils.class.getSimpleName();
+    private static final String TAG = "MiniChat." + NetUtils.class.getSimpleName();
 
     /**
      * 判断wifi是否连接

@@ -4,13 +4,11 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
@@ -21,22 +19,24 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
  * Created by mazhengyang on 18-12-6.
  */
 
-public class UserListFragment extends Fragment {
+public class UserListFragment extends Fragment implements
+        AdapterView.OnItemClickListener, StickyListHeadersListView.OnHeaderClickListener,
+        StickyListHeadersListView.OnStickyHeaderOffsetChangedListener,
+        StickyListHeadersListView.OnStickyHeaderChangedListener {
 
     private static final String TAG = "MiniChat." + UserListFragment.class.getSimpleName();
-
-    private List<UserBean> userList;
-    private UserListAdapter userListAdapter;
-
     @BindView(R.id.tv_head)
     TextView tvHead;
-    @BindView(R.id.recyclerView)
-    RecyclerView recyclerView;
+    @BindView(R.id.stickyListHeadersListView)
+    StickyListHeadersListView stickyListHeadersListView;
+    private List<UserBean> userList;
+    private UserListAdapter userListAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,12 +55,18 @@ public class UserListFragment extends Fragment {
 
         Context context = getContext();
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
-        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         userListAdapter = new UserListAdapter(context, userList);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
-        recyclerView.setAdapter(userListAdapter);
+
+        // stickyListHeadersListView.setOnItemClickListener(this);
+        stickyListHeadersListView.setOnHeaderClickListener(this);
+        stickyListHeadersListView.setOnStickyHeaderChangedListener(this);
+        stickyListHeadersListView.setOnStickyHeaderOffsetChangedListener(this);
+        stickyListHeadersListView.addHeaderView(getLayoutInflater().inflate(R.layout.list_header, null));
+        stickyListHeadersListView.addFooterView(getLayoutInflater().inflate(R.layout.list_footer, null));
+        // stickyListHeadersListView.setEmptyView(findViewById(R.id.empty));
+        stickyListHeadersListView.setDrawingListUnderStickyHeader(true);
+        stickyListHeadersListView.setAreHeadersSticky(true);
+        stickyListHeadersListView.setAdapter(userListAdapter);
 
         return view;
     }
@@ -88,4 +94,23 @@ public class UserListFragment extends Fragment {
         userListAdapter.freshUserList(list);
     }
 
+    @Override
+    public void onHeaderClick(StickyListHeadersListView l, View header, int itemPosition, long headerId, boolean currentlySticky) {
+
+    }
+
+    @Override
+    public void onStickyHeaderOffsetChanged(StickyListHeadersListView l, View header, int offset) {
+
+    }
+
+    @Override
+    public void onStickyHeaderChanged(StickyListHeadersListView l, View header, int itemPosition, long headerId) {
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+    }
 }

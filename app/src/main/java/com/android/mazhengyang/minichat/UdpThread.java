@@ -6,7 +6,7 @@ import android.util.Log;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.util.Constant;
-import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.util.NetUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,9 +35,11 @@ public class UdpThread extends Thread {
     private static final String TAG = "MiniChat." + UdpThread.class.getSimpleName();
 
     public static final int USER_ONLINE = 1000;//上线
-    public static final int USER_OFFLINE = 1001;//下线
-    public static final int SELF_ONLINED = 1002;//增加用户成功
-    public static final int MESSAGE_TO_ALL = 1003;
+    public static final int USER_OFFLINE = USER_ONLINE + 1;//下线
+    public static final int SELF_ONLINED = USER_OFFLINE + 1;//增加用户成功
+
+    public static final int MESSAGE_TO_ALL = 2000;//广播,发送消息给全部ip
+    public static final int MESSAGE_TO_TARGET = MESSAGE_TO_ALL + 1;//发送消息给指定ip
 
     private boolean isOnline;
     //用于接收和发送数据的socket，DatagramSocket只能向指定地址发送，MulticastSocket能实现多点广播
@@ -187,7 +189,7 @@ public class UdpThread extends Thread {
             String s = new String(data, 0, packet.getLength(), Constant.ENCOD);
             MessageBean udpMessage = new MessageBean(new JSONObject(s));
 
-            String selfIp = Utils.getLocalIpAddress();
+            String selfIp = NetUtils.getLocalIpAddress();
             String targetIp = packet.getAddress().getHostAddress();
 
             Log.d(TAG, "handleReceivedMsg: selfIp=" + selfIp);
@@ -256,19 +258,21 @@ public class UdpThread extends Thread {
                         callback.freshUserList(userList);
                     }
                     break;
-                case MESSAGE_TO_ALL:
-                    Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_ALL");
-                    if (messages.containsKey(Constant.ALL_ADDRESS)) {
-                        messages.get(Constant.ALL_ADDRESS).add(udpMessage);//更新现有
+                case MESSAGE_TO_TARGET:
+                    if (messages.containsKey(targetIp)) {
+                        messages.get(targetIp).add(udpMessage);//更新现有
                     } else {
                         Queue<MessageBean> queue = new ConcurrentLinkedQueue<>();
                         queue.add(udpMessage);
-                        messages.put(Constant.ALL_ADDRESS, queue);//新增
+                        messages.put(targetIp, queue);//新增
                     }
 
                     if (callback != null) {
                         callback.freshMessage(messages);
                     }
+                    break;
+                case MESSAGE_TO_ALL:
+                    Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_ALL");
                     break;
             }
 

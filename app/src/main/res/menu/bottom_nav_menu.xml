@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/nav_id_chatroom"
+        android:id="@+id/nav_id_chat_history"
         android:enabled="true"
-        android:title="@string/nav_chatroom"
+        android:title="@string/nav_chat_history"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/nav_id_userlist"
