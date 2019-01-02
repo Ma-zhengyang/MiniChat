@@ -190,10 +190,10 @@ public class UdpThread extends Thread {
             MessageBean udpMessage = new MessageBean(new JSONObject(s));
 
             String selfIp = NetUtils.getLocalIpAddress();
-            String targetIp = packet.getAddress().getHostAddress();
+            String sourceIp = packet.getAddress().getHostAddress();//对方ip
 
             Log.d(TAG, "handleReceivedMsg: selfIp=" + selfIp);
-            Log.d(TAG, "handleReceivedMsg: targetIp=" + targetIp);
+            Log.d(TAG, "handleReceivedMsg: sourceIp=" + sourceIp);
 
             switch (udpMessage.getType()) {
                 case USER_ONLINE:
@@ -202,8 +202,8 @@ public class UdpThread extends Thread {
                     boolean isOld = false;
                     //user已经存在，直接更新在线状态
                     for (UserBean user : userList) {
-                        if (user.getUserIp().equals(targetIp)) {
-                            Log.d(TAG, "handleReceivedMsg: " + targetIp + " is old user");
+                        if (user.getUserIp().equals(sourceIp)) {
+                            Log.d(TAG, "handleReceivedMsg: " + sourceIp + " is old user");
                             if (!user.isOnline()) {
                                 user.setOnline(true);
                             }
@@ -215,17 +215,17 @@ public class UdpThread extends Thread {
                     if (!isOld) {
                         //新user，加入
                         UserBean newUser = new UserBean();
-                        newUser.setUserIp(targetIp);
+                        newUser.setUserIp(sourceIp);
                         newUser.setUserName(udpMessage.getSenderName());
                         newUser.setDeviceCode(udpMessage.getDeviceCode());
                         newUser.setOnline(true);
-                        newUser.setSelf(selfIp.equals(targetIp));
+                        newUser.setSelf(selfIp.equals(sourceIp));
                         userList.add(newUser);
-                        Log.d(TAG, "handleReceivedMsg: " + targetIp + " is new user");
+                        Log.d(TAG, "handleReceivedMsg: " + sourceIp + " is new user");
                     }
 
                     //如果是对方发过来的USER_ONLINE信息，回馈对方，把自己加入对方用户列表
-                    if (!selfIp.equals(targetIp)) {
+                    if (!selfIp.equals(sourceIp)) {
                         send(packUdpMessage("", SELF_ONLINED).toString(), packet.getAddress());
                     }
 
@@ -236,7 +236,7 @@ public class UdpThread extends Thread {
                 case USER_OFFLINE:
                     Log.d(TAG, "handleReceivedMsg: USER_OFFLINE");
                     for (UserBean user : userList) {
-                        if (user.getUserIp().equals(targetIp) && user.isOnline()) {
+                        if (user.getUserIp().equals(sourceIp) && user.isOnline()) {
                             user.setOnline(false);
                             if (callback != null) {
                                 callback.freshUserList(userList);
@@ -249,7 +249,7 @@ public class UdpThread extends Thread {
                 case SELF_ONLINED:
                     Log.d(TAG, "handleReceivedMsg: SELF_ONLINED");
                     UserBean user = new UserBean();
-                    user.setUserIp(targetIp);
+                    user.setUserIp(sourceIp);
                     user.setUserName(udpMessage.getSenderName());
                     user.setDeviceCode(udpMessage.getDeviceCode());
                     user.setOnline(true);
@@ -258,13 +258,16 @@ public class UdpThread extends Thread {
                         callback.freshUserList(userList);
                     }
                     break;
-                case MESSAGE_TO_TARGET:
-                    if (messages.containsKey(targetIp)) {
-                        messages.get(targetIp).add(udpMessage);//更新现有
+                case MESSAGE_TO_TARGET://接收对方发过来的消息
+                    Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_TARGET");
+                    if (messages.containsKey(selfIp)) {
+                        Log.d(TAG, "handleReceivedMsg: 11111");
+                        messages.get(selfIp).add(udpMessage);//更新现有
                     } else {
+                        Log.d(TAG, "handleReceivedMsg: 22222");
                         Queue<MessageBean> queue = new ConcurrentLinkedQueue<>();
                         queue.add(udpMessage);
-                        messages.put(targetIp, queue);//新增
+                        messages.put(selfIp, queue);//新增
                     }
 
                     if (callback != null) {
@@ -299,7 +302,8 @@ public class UdpThread extends Thread {
      * @param destPort 目标端口
      */
     private void send(final String msg, final InetAddress destIp, final int destPort) {
-        Log.d(TAG, "send: " + executorService);
+        // Log.d(TAG, "send: " + executorService);
+        Log.d(TAG, "send: destIp=" + destIp);
         executorService.execute(new Runnable() {
             @Override
             public void run() {

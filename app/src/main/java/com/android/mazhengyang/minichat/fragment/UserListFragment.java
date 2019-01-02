@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.TextView;
 
+import com.android.mazhengyang.minichat.MainActivity;
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.UserListAdapter;
 import com.android.mazhengyang.minichat.bean.UserBean;
@@ -31,12 +32,14 @@ public class UserListFragment extends Fragment implements
         StickyListHeadersListView.OnStickyHeaderChangedListener {
 
     private static final String TAG = "MiniChat." + UserListFragment.class.getSimpleName();
+
+    private List<UserBean> userList;
+    private UserListAdapter userListAdapter;
+
     @BindView(R.id.tv_head)
     TextView tvHead;
     @BindView(R.id.stickyListHeadersListView)
     StickyListHeadersListView stickyListHeadersListView;
-    private List<UserBean> userList;
-    private UserListAdapter userListAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,12 +60,12 @@ public class UserListFragment extends Fragment implements
 
         userListAdapter = new UserListAdapter(context, userList);
 
-        // stickyListHeadersListView.setOnItemClickListener(this);
+        stickyListHeadersListView.setOnItemClickListener(this);
         stickyListHeadersListView.setOnHeaderClickListener(this);
         stickyListHeadersListView.setOnStickyHeaderChangedListener(this);
         stickyListHeadersListView.setOnStickyHeaderOffsetChangedListener(this);
-        stickyListHeadersListView.addHeaderView(getLayoutInflater().inflate(R.layout.list_header, null));
-        stickyListHeadersListView.addFooterView(getLayoutInflater().inflate(R.layout.list_footer, null));
+//        stickyListHeadersListView.addHeaderView(getLayoutInflater().inflate(R.layout.list_header, null));
+//        stickyListHeadersListView.addFooterView(getLayoutInflater().inflate(R.layout.list_footer, null));
         // stickyListHeadersListView.setEmptyView(findViewById(R.id.empty));
         stickyListHeadersListView.setDrawingListUnderStickyHeader(true);
         stickyListHeadersListView.setAreHeadersSticky(true);
@@ -111,6 +114,7 @@ public class UserListFragment extends Fragment implements
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+        Log.d(TAG, "onItemClick: position=" + position);
+        ((MainActivity) getContext()).onUserItemClick(userList.get(position));
     }
 }

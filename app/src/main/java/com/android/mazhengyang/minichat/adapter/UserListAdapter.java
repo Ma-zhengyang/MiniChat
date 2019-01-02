@@ -31,54 +31,52 @@ public class UserListAdapter extends BaseAdapter implements
 
     private List<UserBean> list;
 
-    private String[] mCountries;
+    private List<String> mNameList = new ArrayList<>(20);//暂最多20个好友
     private int[] mSectionIndices;
     private Character[] mSectionLetters;
     private LayoutInflater mInflater;
 
-    private Context context;
-
     public UserListAdapter(Context context, List<UserBean> list) {
-        Log.d(TAG, "UserListAdapter: list=" + list);
-        this.context = context;
+        Log.d(TAG, "UserListAdapter: ");
+
         mInflater = LayoutInflater.from(context);
+
         this.list = list;
-        mCountries = new String[1];
-
-        if (list != null) {
-            for (int i = 0; i < list.size(); i++) {
-                mCountries[i] = list.get(i).getUserName();
-            }
-
-            mSectionIndices = getSectionIndices();
-            mSectionLetters = getSectionLetters();
-        }
+        formatList();
     }
 
     public void freshUserList(List<UserBean> list) {
-        Log.d(TAG, "freshUserList: list=" + list);
-        this.list = list;
+        Log.d(TAG, "freshUserList: ");
 
-        if (list != null) {
+        this.list = list;
+        formatList();
+        this.notifyDataSetChanged();
+    }
+
+    private void formatList() {
+
+        if (list != null && list.size() > 0) {
+            Log.d(TAG, "formatList: list size=" + list.size());
+            mNameList.clear();
+
             for (int i = 0; i < list.size(); i++) {
-                mCountries[i] = list.get(i).getUserName();
+                String name = list.get(i).getUserName();
+                mNameList.add(i, name);
             }
 
             mSectionIndices = getSectionIndices();
             mSectionLetters = getSectionLetters();
         }
-
-        this.notifyDataSetChanged();
     }
 
     private int[] getSectionIndices() {
         Log.d(TAG, "getSectionIndices: ");
         ArrayList<Integer> sectionIndices = new ArrayList<>();
-        char lastFirstChar = mCountries[0].charAt(0);
+        char lastFirstChar = mNameList.get(0).charAt(0);
         sectionIndices.add(0);
-        for (int i = 1; i < mCountries.length; i++) {
-            if (mCountries[i].charAt(0) != lastFirstChar) {
-                lastFirstChar = mCountries[i].charAt(0);
+        for (int i = 1; i < mNameList.size(); i++) {
+            if (mNameList.get(i).charAt(0) != lastFirstChar) {
+                lastFirstChar = mNameList.get(i).charAt(0);
                 sectionIndices.add(i);
             }
         }
@@ -93,7 +91,7 @@ public class UserListAdapter extends BaseAdapter implements
         Log.d(TAG, "getSectionLetters: ");
         Character[] letters = new Character[mSectionIndices.length];
         for (int i = 0; i < mSectionIndices.length; i++) {
-            letters[i] = mCountries[mSectionIndices[i]].charAt(0);
+            letters[i] = mNameList.get(mSectionIndices[i]).charAt(0);
         }
         return letters;
     }
@@ -143,7 +141,7 @@ public class UserListAdapter extends BaseAdapter implements
         }
 
         UserBean user = list.get(position);
-        Log.d(TAG, "getView: user=" + user);
+//        Log.d(TAG, "getView: user=" + user);
 
         if (user != null) {
             String name = user.getUserName();
@@ -191,7 +189,7 @@ public class UserListAdapter extends BaseAdapter implements
         }
 
         // set header text as first char in name
-        CharSequence headerChar = mCountries[position].subSequence(0, 1);
+        CharSequence headerChar = mNameList.get(position).subSequence(0, 1);
         holder.headerText.setText(headerChar);
 
         return convertView;
@@ -199,7 +197,7 @@ public class UserListAdapter extends BaseAdapter implements
 
     @Override
     public long getHeaderId(int position) {
-        return mCountries[position].subSequence(0, 1).charAt(0);
+        return mNameList.get(position).subSequence(0, 1).charAt(0);
     }
 
     @Override

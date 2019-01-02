@@ -24,11 +24,11 @@ public class MessageBean {
 
     public MessageBean(JSONObject object) throws JSONException {
         senderName = new String(Base64.decode(object.getString("senderName").getBytes(), Base64.DEFAULT));
-        msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
-
-        sendTime = object.getString("sendTime");
-        type = object.getInt("type");
         deviceCode = object.getString("deviceCode");
+        msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
+        type = object.getInt("type");
+        own = object.getBoolean("own");
+        sendTime = object.getString("sendTime");
     }
 
     /**
@@ -37,11 +37,13 @@ public class MessageBean {
     public String toString() {
         JSONObject object = new JSONObject();
         try {
+
             object.put("senderName", Base64.encodeToString(senderName.getBytes(), Base64.DEFAULT));
-            object.put("msg", Base64.encodeToString(msg.getBytes(), Base64.DEFAULT));
-            object.put("sendTime", System.currentTimeMillis() + "");
-            object.put("type", type);
             object.put("deviceCode", deviceCode);
+            object.put("msg", Base64.encodeToString(msg.getBytes(), Base64.DEFAULT));
+            object.put("type", type);
+            object.put("own", own);
+            object.put("sendTime", System.currentTimeMillis() + "");
             return object.toString();
         } catch (JSONException e) {
             e.printStackTrace();

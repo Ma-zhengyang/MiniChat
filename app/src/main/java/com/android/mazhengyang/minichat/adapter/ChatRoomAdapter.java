@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
@@ -14,9 +15,12 @@ import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.util.Constant;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 
@@ -31,6 +35,10 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     private static final String TAG = "MiniChat." + ChatRoomAdapter.class.getSimpleName();
 
+    private static final int TYPE_SELF = 0;
+    private static final int TYPE_FRIEND = 1;
+
+    private SimpleDateFormat format;
     private List<MessageBean> messageList = new ArrayList<>();//保存聊天信息
 
     private Context context;
@@ -39,15 +47,18 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         Log.d(TAG, "ChatRoomAdapter: ");
         this.context = context;
 //          this.messagesMap = messagesMap;
+        format = new SimpleDateFormat("HH:mm", Locale.CHINA);
     }
 
     public void freshMessageMap(Map<String, Queue<MessageBean>> messagesMap) {
 
-        Log.d(TAG, "freshMessageMap: ");
-
         String selfIp = NetUtils.getLocalIpAddress();
 
         Queue<MessageBean> queue = messagesMap.get(selfIp);
+
+        Log.d(TAG, "freshMessageMap: messagesMap size=" + messagesMap.size());
+        Log.d(TAG, "freshMessageMap: queue=" + queue);
+
         if (queue != null) {
             Iterator<MessageBean> iterator = queue.iterator();
             while (iterator.hasNext()) {
@@ -65,11 +76,20 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Log.d(TAG, "onCreateViewHolder: ");
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_message, parent, false);
-        ChatRoomAdapter.UserItemViewHolder vh = new ChatRoomAdapter.UserItemViewHolder(v);
-        return vh;
+        Log.d(TAG, "onCreateViewHolder: viewType=" + viewType);
+
+        if (viewType == TYPE_SELF) {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_message_self, parent, false);
+            UserItemViewHolder vh = new UserItemViewHolder(v);
+            return vh;
+        } else {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_message, parent, false);
+            UserItemViewHolder vh = new UserItemViewHolder(v);
+            return vh;
+        }
+
     }
 
     @Override
@@ -78,8 +98,17 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             Log.d(TAG, "onBindViewHolder: messageList is null");
             return;
         }
+
         MessageBean messageBean = messageList.get(position);
+        ((UserItemViewHolder) holder).tvTime.setText(format.format(new Date(Long.valueOf(messageBean.getSendTime()))));
         ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMsg());
+        //Log.d(TAG, "getItemViewType: isOwn=" + messageBean.isOwn());
+
+        if (messageBean.isOwn()) {
+            ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
+        } else {
+            ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
+        }
     }
 
     @Override
@@ -92,19 +121,32 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         return count;
     }
 
-    public class UserItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    @Override
+    public int getItemViewType(int position) {
 
+        MessageBean messageBean = messageList.get(position);
+
+        Log.d(TAG, "getItemViewType: isOwn=" + messageBean.isOwn());
+
+        if (messageBean.isOwn()) {
+            return TYPE_SELF;
+        } else {
+            return TYPE_FRIEND;
+        }
+    }
+
+    public class UserItemViewHolder extends RecyclerView.ViewHolder {
+
+        @BindView(R.id.tvTime)
+        TextView tvTime;
         @BindView(R.id.tvMessage)
         TextView tvMessage;
+        @BindView(R.id.ivUserIcon)
+        ImageView ivUserIcon;
 
         public UserItemViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
-        }
-
-        @Override
-        public void onClick(View v) {
-
         }
     }
 

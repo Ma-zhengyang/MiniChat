@@ -124,14 +124,15 @@ public class ChatRoomFragment extends Fragment {
 
             String ip = userBean.getUserIp();
             String message = editText.getText().toString().trim();
+
             Log.d(TAG, "onClick: ip=" + ip);
             Log.d(TAG, "onClick: message=" + message);
 
             if (!"".equals(message)) {
                 UdpThread udpThread = UdpThread.getInstance();
-                MessageBean messageBean = udpThread.packUdpMessage(message, UdpThread.MESSAGE_TO_TARGET/*UdpThread.MESSAGE_TO_ALL*/);
+                MessageBean messageBean = udpThread.packUdpMessage(message, UdpThread.MESSAGE_TO_TARGET);
                 try {
-                    udpThread.send(messageBean, InetAddress.getByName(ip/*Constant.ALL_ADDRESS*/));
+                    udpThread.send(messageBean, InetAddress.getByName(ip));
                     editText.setText(null);
                 } catch (UnknownHostException e) {
                     e.printStackTrace();

@@ -176,7 +176,9 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
             Log.d(TAG, "handleMessage: msg.what=" + msg.what);
             switch (msg.what) {
                 case MESSAGE_FRESH_USERLIST:
-                    userListFragment.fresh((List<UserBean>) msg.obj);
+                    if (userListFragment != null) {
+                        userListFragment.fresh((List<UserBean>) msg.obj);
+                    }
                     break;
                 case MESSAGE_FRESH_MESSAGE:
                     if (chatRoomFragment != null) {
