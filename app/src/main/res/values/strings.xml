@@ -1,7 +1,8 @@
 <resources>
 
     <string name="app_name">微聊</string>
-    <string name="wifi_unconnected">连接失败，请检查Wifi状态</string>
+    <string name="wifi_connected">wifi已连接</string>
+    <string name="wifi_unconnected">wifi未连接</string>
     <string name="send_msg">发送</string>
     <string name="daynight_mode_change">夜间模式</string>
     <string name="nav_chat_history">聊天</string>

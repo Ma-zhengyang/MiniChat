@@ -36,24 +36,19 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements UdpThread.Callback {
 
-    private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
-
     public static final int MESSAGE_FRESH_USERLIST = 1024;
     public static final int MESSAGE_FRESH_MESSAGE = 1025;
-
+    private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
+    @BindView(R.id.bottom_nav)
+    BottomNavigationView bottomNavigationView;
     private NetWorkStateReceiver netWorkStateReceiver;
-
     private Handler handler = new MainHandler();
     private UdpThread udpThread;
-
     private UserListFragment userListFragment;
     private ChatHistoryFragment chatHistoryFragment;
     private ChatRoomFragment chatRoomFragment;
     private MeFragment meFragment;
     private Fragment currentFragment;
-
-    @BindView(R.id.bottom_nav)
-    BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        NetUtils.resetLocalIpAddress();
 
         initView();
 
@@ -70,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         }
 
         udpThread = UdpThread.getInstance();
+        udpThread.start(this);
 
         netWorkStateReceiver = new NetWorkStateReceiver();
         IntentFilter intentFilter = new IntentFilter();
@@ -87,11 +84,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
         boolean isWifiConnected = NetUtils.isWifiConnected(this);
         Log.d(TAG, "onResume: isWifiConnected=" + isWifiConnected);
-        if (isWifiConnected) {
-            udpThread.startRun(this);
-        } else {
-            Toast.makeText(this, R.string.wifi_unconnected, Toast.LENGTH_SHORT).show();
-        }
+        udpThread.setOnline(isWifiConnected);
     }
 
     @Override
@@ -104,7 +97,9 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     protected void onDestroy() {
         Log.d(TAG, "onDestroy: ");
         super.onDestroy();
+
         udpThread.release();
+
         unregisterReceiver(netWorkStateReceiver);
         handler.removeCallbacksAndMessages(null);
         ChangeModeController.onDestory();
@@ -169,6 +164,31 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         }
     }
 
+    @Override
+    public void freshUserList(List<UserBean> userList) {
+        Message message = new Message();
+        message.what = MESSAGE_FRESH_USERLIST;
+        message.obj = userList;
+        handler.sendMessage(message);
+    }
+
+    @Override
+    public void freshMessage(Map<String, Queue<MessageBean>> messageMap) {
+        Message message = new Message();
+        message.what = MESSAGE_FRESH_MESSAGE;
+        message.obj = messageMap;
+        handler.sendMessage(message);
+    }
+
+    public void onUserItemClick(UserBean user) {
+
+        if (chatRoomFragment == null) {
+            chatRoomFragment = new ChatRoomFragment();
+        }
+        chatRoomFragment.setUserBean(user);
+        showFragment(chatRoomFragment);
+    }
+
     private class MainHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -199,37 +219,15 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
             if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
                 boolean isWifiConnected = NetUtils.isWifiConnected(MainActivity.this);
                 Log.d(TAG, "onReceive: isWifiConnected=" + isWifiConnected);
-                if (isWifiConnected) {
-                    udpThread.startRun(MainActivity.this);
+
+                if (!isWifiConnected) {
+                    Toast.makeText(MainActivity.this, R.string.wifi_unconnected, Toast.LENGTH_SHORT).show();
                 } else {
-                    udpThread.noticeOffline();
+                    Toast.makeText(MainActivity.this, R.string.wifi_connected, Toast.LENGTH_SHORT).show();
                 }
+
+                udpThread.setOnline(isWifiConnected);
             }
         }
-    }
-
-    @Override
-    public void freshUserList(List<UserBean> userList) {
-        Message message = new Message();
-        message.what = MESSAGE_FRESH_USERLIST;
-        message.obj = userList;
-        handler.sendMessage(message);
-    }
-
-    @Override
-    public void freshMessage(Map<String, Queue<MessageBean>> messageMap) {
-        Message message = new Message();
-        message.what = MESSAGE_FRESH_MESSAGE;
-        message.obj = messageMap;
-        handler.sendMessage(message);
-    }
-
-    public void onUserItemClick(UserBean user) {
-
-        if (chatRoomFragment == null) {
-            chatRoomFragment = new ChatRoomFragment();
-        }
-        chatRoomFragment.setUserBean(user);
-        showFragment(chatRoomFragment);
     }
 }

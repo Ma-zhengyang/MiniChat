@@ -8,11 +8,11 @@ import java.io.Serializable;
 
 public class UserBean implements Serializable {
 
-    private String userName;    // 用户名
-    private String userIp;      //ip地址
-    private String deviceCode;//手机设备码
-    private boolean isOnline;
-    private boolean isSelf;
+    private String userName; //用户名
+    private String userIp; //ip地址
+    private String deviceCode; //手机设备码
+    private boolean isOnline; //是否在线
+    private boolean isSelf; //是否是自己
 
     public String getUserName() {
         return userName;

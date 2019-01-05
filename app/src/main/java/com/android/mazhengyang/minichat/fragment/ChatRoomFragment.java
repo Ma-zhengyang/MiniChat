@@ -21,7 +21,6 @@ import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.adapter.ChatRoomAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.util.Constant;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -122,22 +121,17 @@ public class ChatRoomFragment extends Fragment {
         @Override
         public void onClick(View v) {
 
-            String ip = userBean.getUserIp();
+            String receiverIp = userBean.getUserIp();
             String message = editText.getText().toString().trim();
 
-            Log.d(TAG, "onClick: ip=" + ip);
+            Log.d(TAG, "onClick: receiverIp=" + receiverIp);
             Log.d(TAG, "onClick: message=" + message);
 
             if (!"".equals(message)) {
                 UdpThread udpThread = UdpThread.getInstance();
-                MessageBean messageBean = udpThread.packUdpMessage(message, UdpThread.MESSAGE_TO_TARGET);
-                try {
-                    udpThread.send(messageBean, InetAddress.getByName(ip));
-                    editText.setText(null);
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "onClick: " + e);
-                }
+                MessageBean messageBean = udpThread.packUdpMessage(receiverIp, message, UdpThread.MESSAGE_TO_TARGET);
+                udpThread.send(messageBean);
+                editText.setText(null);
             }
         }
     };

@@ -12,7 +12,6 @@ import android.widget.TextView;
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.bean.MessageBean;
-import com.android.mazhengyang.minichat.util.Constant;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
 import java.text.SimpleDateFormat;
@@ -102,9 +101,14 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         MessageBean messageBean = messageList.get(position);
         ((UserItemViewHolder) holder).tvTime.setText(format.format(new Date(Long.valueOf(messageBean.getSendTime()))));
         ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMsg());
-        //Log.d(TAG, "getItemViewType: isOwn=" + messageBean.isOwn());
 
-        if (messageBean.isOwn()) {
+        String senderIp = messageBean.getSenderIp();
+        String receiverIp = messageBean.getReceiverIp();
+
+        Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
+        Log.d(TAG, "onBindViewHolder: receiverIp=" + receiverIp);
+
+        if (senderIp.equals(NetUtils.getLocalIpAddress())) {
             ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
         } else {
             ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
@@ -124,11 +128,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public int getItemViewType(int position) {
 
+        Log.d(TAG, "getItemViewType: ");
+
         MessageBean messageBean = messageList.get(position);
 
-        Log.d(TAG, "getItemViewType: isOwn=" + messageBean.isOwn());
-
-        if (messageBean.isOwn()) {
+        if (messageBean.getSenderIp().equals(NetUtils.getLocalIpAddress())) {
             return TYPE_SELF;
         } else {
             return TYPE_FRIEND;

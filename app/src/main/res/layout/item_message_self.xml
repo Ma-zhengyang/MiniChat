@@ -12,26 +12,29 @@
         android:layout_gravity="center"
         android:textSize="12sp" />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right|center"
-        android:orientation="horizontal">
+        android:layout_marginLeft="50dp">
+
+        <ImageView
+            android:id="@+id/ivUserIcon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true" />
 
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
             android:layout_marginRight="5dp"
+            android:layout_toLeftOf="@+id/ivUserIcon"
+            android:background="@color/to_self_message_bg"
             android:textColor="@color/black"
             android:textSize="16sp" />
 
-        <ImageView
-            android:id="@+id/ivUserIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp" />
-
-    </LinearLayout>
-
+    </RelativeLayout>
 
 </LinearLayout>

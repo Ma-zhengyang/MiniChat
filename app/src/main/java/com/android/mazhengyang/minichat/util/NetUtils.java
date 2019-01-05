@@ -19,6 +19,8 @@ public class NetUtils {
 
     private static final String TAG = "MiniChat." + NetUtils.class.getSimpleName();
 
+    private static String ip;
+
     /**
      * 判断wifi是否连接
      *
@@ -41,26 +43,33 @@ public class NetUtils {
      * @return
      */
     public static String getLocalIpAddress() {
-        try {
-            //获得当前可用的wifi网络
-            Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-            while (en.hasMoreElements()) {
-                NetworkInterface nif = en.nextElement();
-                Enumeration<InetAddress> enumIpAddr = nif.getInetAddresses();
-                while (enumIpAddr.hasMoreElements()) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address
+        if (ip == null) {
+            try {
+                //获得当前可用的wifi网络
+                Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
+                while (en.hasMoreElements()) {
+                    NetworkInterface nif = en.nextElement();
+                    Enumeration<InetAddress> enumIpAddr = nif.getInetAddresses();
+                    while (enumIpAddr.hasMoreElements()) {
+                        InetAddress inetAddress = enumIpAddr.nextElement();
+                        if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address
                         /*&& InetAddressUtils.isIPv4Address(mInetAddress.getHostAddress())*/) {
-                        return inetAddress.getHostAddress();
+                            ip = inetAddress.getHostAddress();
+                            return ip;
+                        }
                     }
                 }
+            } catch (SocketException e) {
+                e.printStackTrace();
+                Log.e(TAG, "getLocalIpAddress: fail to access ip, " + e);
             }
-        } catch (SocketException e) {
-            e.printStackTrace();
-            Log.e(TAG, "getLocalIpAddress: fail to access ip, " + e);
         }
+        return ip;
+    }
 
-        return null;
+
+    public static void resetLocalIpAddress() {
+        ip = null;
     }
 
 }

@@ -11,6 +11,9 @@
     <color name="lightGray">#FFD3D3D3</color>
     <color name="deepGray">#FF8B8B8B</color>
 
+    <color name="to_self_message_bg">#3300FF00</color>
+    <color name="from_friend_message_bg">#FFD3D3D3</color>
+
     <!--白天主题-->
     <color name="day_backgroup_color">#FFFFFFFF</color>
     <color name="day_one_text_color">#FF000000</color>
@@ -22,7 +25,7 @@
     <color name="night_two_text_color">#8A9599</color>
     <color name="night_there_text_color">#8A9599</color>
 
-    <color name="wave_view_bg">#66C1FFC1</color>
+    <color name="wave_view_bg">#ffe4c4</color>
 
     <color name="header_normal">#FFD3D3D3</color>
     <color name="header_pressed">#FF8B8B8B</color>
