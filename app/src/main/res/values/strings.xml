@@ -4,9 +4,13 @@
     <string name="wifi_connected">wifi已连接</string>
     <string name="wifi_unconnected">wifi未连接</string>
     <string name="send_msg">发送</string>
+    <string name="user_nickname">昵称</string>
+    <string name="user_default_nickname">我</string>
     <string name="daynight_mode_change">夜间模式</string>
     <string name="nav_chat_history">聊天</string>
     <string name="nav_userlist">通讯录</string>
     <string name="nav_self">我</string>
+
+    <string name="wanshan">完善中...</string>
 
 </resources>

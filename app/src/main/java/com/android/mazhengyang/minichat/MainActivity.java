@@ -23,6 +23,7 @@ import com.android.mazhengyang.minichat.fragment.ChatHistoryFragment;
 import com.android.mazhengyang.minichat.fragment.ChatRoomFragment;
 import com.android.mazhengyang.minichat.fragment.MeFragment;
 import com.android.mazhengyang.minichat.fragment.UserListFragment;
+import com.android.mazhengyang.minichat.util.Constant;
 import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
@@ -34,15 +35,14 @@ import java.util.Queue;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements UdpThread.Callback {
+public class MainActivity extends AppCompatActivity {
 
-    public static final int MESSAGE_FRESH_USERLIST = 1024;
-    public static final int MESSAGE_FRESH_MESSAGE = 1025;
     private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
+
     @BindView(R.id.bottom_nav)
     BottomNavigationView bottomNavigationView;
+
     private NetWorkStateReceiver netWorkStateReceiver;
-    private Handler handler = new MainHandler();
     private UdpThread udpThread;
     private UserListFragment userListFragment;
     private ChatHistoryFragment chatHistoryFragment;
@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         ChangeModeController.getInstance().init(this, R.attr.class);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         }
 
         udpThread = UdpThread.getInstance();
-        udpThread.start(this);
+        udpThread.start(new MainHandler());
 
         netWorkStateReceiver = new NetWorkStateReceiver();
         IntentFilter intentFilter = new IntentFilter();
@@ -101,7 +102,6 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         udpThread.release();
 
         unregisterReceiver(netWorkStateReceiver);
-        handler.removeCallbacksAndMessages(null);
         ChangeModeController.onDestory();
     }
 
@@ -164,22 +164,6 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
         }
     }
 
-    @Override
-    public void freshUserList(List<UserBean> userList) {
-        Message message = new Message();
-        message.what = MESSAGE_FRESH_USERLIST;
-        message.obj = userList;
-        handler.sendMessage(message);
-    }
-
-    @Override
-    public void freshMessage(Map<String, Queue<MessageBean>> messageMap) {
-        Message message = new Message();
-        message.what = MESSAGE_FRESH_MESSAGE;
-        message.obj = messageMap;
-        handler.sendMessage(message);
-    }
-
     public void onUserItemClick(UserBean user) {
 
         if (chatRoomFragment == null) {
@@ -195,13 +179,17 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
             super.handleMessage(msg);
             Log.d(TAG, "handleMessage: msg.what=" + msg.what);
             switch (msg.what) {
-                case MESSAGE_FRESH_USERLIST:
+                case Constant.MESSAGE_FRESH_USERLIST:
                     if (userListFragment != null) {
                         userListFragment.fresh((List<UserBean>) msg.obj);
                     }
                     break;
-                case MESSAGE_FRESH_MESSAGE:
-                    if (chatRoomFragment != null) {
+                case Constant.MESSAGE_FRESH_MESSAGE:
+                    if (currentFragment == userListFragment) {
+
+                    } else if (currentFragment == chatHistoryFragment) {
+
+                    } else {
                         chatRoomFragment.fresh((Map<String, Queue<MessageBean>>) msg.obj);
                     }
                     break;
@@ -222,9 +210,9 @@ public class MainActivity extends AppCompatActivity implements UdpThread.Callbac
 
                 if (!isWifiConnected) {
                     Toast.makeText(MainActivity.this, R.string.wifi_unconnected, Toast.LENGTH_SHORT).show();
-                } else {
+                } /*else {
                     Toast.makeText(MainActivity.this, R.string.wifi_connected, Toast.LENGTH_SHORT).show();
-                }
+                }*/
 
                 udpThread.setOnline(isWifiConnected);
             }

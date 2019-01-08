@@ -31,7 +31,7 @@
             android:layout_centerVertical="true"
             android:layout_marginRight="5dp"
             android:layout_toLeftOf="@+id/ivUserIcon"
-            android:background="@color/to_self_message_bg"
+            android:background="@drawable/chat_self_bg"
             android:textColor="@color/black"
             android:textSize="16sp" />
 
