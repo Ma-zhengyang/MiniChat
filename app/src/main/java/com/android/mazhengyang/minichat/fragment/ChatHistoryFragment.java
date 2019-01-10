@@ -14,13 +14,11 @@ import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.ChatHistoryAdapter;
-import com.android.mazhengyang.minichat.adapter.ChatRoomAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -33,13 +31,19 @@ public class ChatHistoryFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + ChatHistoryFragment.class.getSimpleName();
 
-    private List<UserBean> userList;
+    private List<UserBean> chatedUserList;
+    private Map<String, List<MessageBean>> messageBeanList;
+
     private ChatHistoryAdapter chatHistoryAdapter;
 
     @BindView(R.id.tv_head)
     TextView tvHead;
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
+
+    public void setChatedUserList(List<UserBean> chatedUserList) {
+        this.chatedUserList = chatedUserList;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,14 +57,14 @@ public class ChatHistoryFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_chat_history, null);
         ButterKnife.bind(this, view);
 
-        tvHead.setText(R.string.nav_chat_history);
+        tvHead.setText(R.string.tab_chat_history);
 
         Context context = getContext();
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        chatHistoryAdapter = new ChatHistoryAdapter(context, userList);
+        chatHistoryAdapter = new ChatHistoryAdapter(context, chatedUserList);
         recyclerView.setAdapter(chatHistoryAdapter);
 
         return view;
@@ -78,8 +82,4 @@ public class ChatHistoryFragment extends Fragment {
         super.onDestroy();
     }
 
-    public void fresh(List<UserBean> userList) {
-        this.userList = userList;
-        chatHistoryAdapter.fresh(userList);
-    }
 }

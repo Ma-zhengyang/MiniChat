@@ -1,12 +1,11 @@
 package com.android.mazhengyang.minichat;
 
 import android.os.Build;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.model.ISocketCallback;
 import com.android.mazhengyang.minichat.util.Constant;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
@@ -21,10 +20,6 @@ import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,22 +38,20 @@ public class UdpThread extends Thread {
     public static final int MESSAGE_TO_ALL = 2000;//广播,发送消息给全部ip
     public static final int MESSAGE_TO_TARGET = MESSAGE_TO_ALL + 1;//发送消息给指定ip
 
-    private Handler handler;
-
     private boolean isOnline;
     //用于接收和发送数据的socket，DatagramSocket只能向指定地址发送，MulticastSocket能实现多点广播
     private MulticastSocket multicastSocket;
     private DatagramPacket datagramPacket;
     //保存用户列表
     private List<UserBean> userList = new ArrayList<>();
-    //保存用户发的消息，每个ip都会开启一个消息队列来缓存消息
-    private Map<String, Queue<MessageBean>> messagesMap = new ConcurrentHashMap<>();
 
     private int port = Constant.MESSAGE_PORT;
     private final static int DEFAULT_BUFFERSIZE = 1024 * 2;
     private byte[] bufferData;
 
     private ExecutorService executorService;
+
+    private ISocketCallback socketCallback;
 
     private static UdpThread instance;
 
@@ -67,6 +60,10 @@ public class UdpThread extends Thread {
             instance = new UdpThread();
         }
         return instance;
+    }
+
+    public void setSocketCallback(ISocketCallback socketCallback) {
+        this.socketCallback = socketCallback;
     }
 
     @Override
@@ -97,10 +94,8 @@ public class UdpThread extends Thread {
      * 启动
      */
 
-    public void start(Handler handler) {
+    public void startWork() {
         Log.d(TAG, "start: ");
-        this.handler = handler;
-
         try {
             executorService = Executors.newFixedThreadPool(10);
             multicastSocket = new MulticastSocket(port);
@@ -160,7 +155,6 @@ public class UdpThread extends Thread {
 
         setOnline(false);
         interrupt();
-        handler.removeCallbacksAndMessages(null);
         if (executorService != null) {
             executorService.shutdown();
             executorService = null;
@@ -174,30 +168,20 @@ public class UdpThread extends Thread {
 
     public void send(MessageBean messageBean) {
 
-        //显示出自己发的消息
+        //自己给自己发消息
         String selfIp = NetUtils.getLocalIpAddress();
-        if (messagesMap.containsKey(selfIp)) {
-            messagesMap.get(selfIp).add(messageBean);//更新现有
-        } else {
-            Queue<MessageBean> queue = new ConcurrentLinkedQueue<>();
-            queue.add(messageBean);
-            messagesMap.put(selfIp, queue);//新增
+        if (selfIp.equals(messageBean.getReceiverIp())) {
+            freshMessage(messageBean);
+            return;
         }
-        freshMessage(messagesMap);
 
-        String receiverIp = messageBean.getReceiverIp();
-
-        if (selfIp.equals(receiverIp)) {
-            Log.d(TAG, "send: this message is to self.");
-            //如果是自己发给自己的，就不发出去，以免在run()接收处理后又显示一遍
-        } else {
-            //发生给对方
-            try {
-                send(messageBean.toString(), InetAddress.getByName(receiverIp));
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-                Log.e(TAG, "send: " + e);
-            }
+        //发送给对方
+        try {
+            String receiverIp = messageBean.getReceiverIp();
+            send(messageBean.toString(), InetAddress.getByName(receiverIp));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            Log.e(TAG, "send: " + e);
         }
     }
 
@@ -265,10 +249,10 @@ public class UdpThread extends Thread {
             MessageBean messageBean = new MessageBean(new JSONObject(s));
 
             String selfIp = NetUtils.getLocalIpAddress();
-            String sourceIp = datagramPacket.getAddress().getHostAddress();//对方ip。自己给自己发的话这个ip就是自己
+            String senderIp = datagramPacket.getAddress().getHostAddress();//对方ip。自己给自己发的话这个ip就是自己
 
             Log.d(TAG, "handleReceivedMsg: selfIp=" + selfIp);
-            Log.d(TAG, "handleReceivedMsg: sourceIp=" + sourceIp);
+            Log.d(TAG, "handleReceivedMsg: senderIp=" + senderIp);
 
             switch (messageBean.getType()) {
                 case ACTION_ONLINE: //来自noticeOnline中的群播，每个用户都会收到，包括自己
@@ -277,8 +261,8 @@ public class UdpThread extends Thread {
                     boolean isOld = false;
                     //user已经存在，直接更新在线状态
                     for (UserBean user : userList) {
-                        if (user.getUserIp().equals(sourceIp)) {
-                            Log.d(TAG, "handleReceivedMsg: " + sourceIp + " has existed.");
+                        if (user.getUserIp().equals(senderIp)) {
+                            Log.d(TAG, "handleReceivedMsg: " + senderIp + " has existed.");
                             if (!user.isOnline()) {
                                 user.setOnline(true);
                             }
@@ -289,18 +273,18 @@ public class UdpThread extends Thread {
 
                     if (!isOld) {
                         //新user，加入
-                        Log.d(TAG, "handleReceivedMsg: " + sourceIp + " not existed, add it.");
+                        Log.d(TAG, "handleReceivedMsg: " + senderIp + " not existed, add it.");
                         UserBean newUser = new UserBean();
-                        newUser.setUserIp(sourceIp);
+                        newUser.setUserIp(senderIp);
                         newUser.setUserName(messageBean.getSenderName());
                         newUser.setDeviceCode(messageBean.getDeviceCode());
                         newUser.setOnline(true);
-                        newUser.setSelf(selfIp.equals(sourceIp));
+                        newUser.setSelf(selfIp.equals(senderIp));
                         userList.add(newUser);
                     }
 
                     //自己上线后，对方接收到ACTION_ONLINE后执行这里，这样就会把对方加入到自己列表
-                    if (!selfIp.equals(sourceIp)) {
+                    if (!selfIp.equals(senderIp)) {
                         send(packUdpMessage(Constant.ALL_ADDRESS, "", ACTION_ONLINED).toString(),
                                 datagramPacket.getAddress());
                     }
@@ -310,7 +294,7 @@ public class UdpThread extends Thread {
                 case ACTION_OFFLINE:
                     Log.d(TAG, "handleReceivedMsg: ACTION_OFFLINE");
                     for (UserBean user : userList) {
-                        if (user.getUserIp().equals(sourceIp) && user.isOnline()) {
+                        if (user.getUserIp().equals(senderIp) && user.isOnline()) {
                             user.setOnline(false);
                             freshUserList(userList);
                             break;
@@ -321,7 +305,7 @@ public class UdpThread extends Thread {
                 case ACTION_ONLINED:
                     Log.d(TAG, "handleReceivedMsg: ACTION_ONLINED");
                     UserBean user = new UserBean();
-                    user.setUserIp(sourceIp);
+                    user.setUserIp(senderIp);
                     user.setUserName(messageBean.getSenderName());
                     user.setDeviceCode(messageBean.getDeviceCode());
                     user.setOnline(true);
@@ -331,16 +315,7 @@ public class UdpThread extends Thread {
                     break;
                 case MESSAGE_TO_TARGET://接收对方发过来的消息
                     Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_TARGET");
-                    if (messagesMap.containsKey(selfIp)) {
-                        Log.d(TAG, "handleReceivedMsg: 11111");
-                        messagesMap.get(selfIp).add(messageBean);//更新现有
-                    } else {
-                        Log.d(TAG, "handleReceivedMsg: 22222");
-                        Queue<MessageBean> queue = new ConcurrentLinkedQueue<>();
-                        queue.add(messageBean);
-                        messagesMap.put(selfIp, queue);//新增
-                    }
-                    freshMessage(messagesMap);
+                    freshMessage(messageBean);
                     break;
                 case MESSAGE_TO_ALL:
                     Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_ALL");
@@ -357,17 +332,21 @@ public class UdpThread extends Thread {
 
 
     private void freshUserList(List<UserBean> userList) {
-        Message message = new Message();
-        message.what = Constant.MESSAGE_FRESH_USERLIST;
-        message.obj = userList;
-        handler.sendMessage(message);
+        if (socketCallback != null) {
+            Log.d(TAG, "freshUserList: ");
+            socketCallback.freshUserList(userList);
+        } else {
+            Log.e(TAG, "freshUserList: socketCallback=null");
+        }
     }
 
-    private void freshMessage(Map<String, Queue<MessageBean>> messageMap) {
-        Message message = new Message();
-        message.what = Constant.MESSAGE_FRESH_MESSAGE;
-        message.obj = messageMap;
-        handler.sendMessage(message);
+    private void freshMessage(MessageBean messageBean) {
+        if (socketCallback != null) {
+            Log.d(TAG, "freshMessage: ");
+            socketCallback.freshMessage(messageBean);
+        } else {
+            Log.e(TAG, "freshUserList: socketCallback=null");
+        }
     }
 
 }

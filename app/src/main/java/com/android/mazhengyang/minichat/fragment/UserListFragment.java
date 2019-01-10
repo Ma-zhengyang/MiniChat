@@ -15,6 +15,7 @@ import com.android.mazhengyang.minichat.MainActivity;
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.UserListAdapter;
 import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.model.IUserListCallback;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class UserListFragment extends Fragment implements
 
     private static final String TAG = "MiniChat." + UserListFragment.class.getSimpleName();
 
+    private IUserListCallback userListCallback;
+
     private List<UserBean> userList;
     private UserListAdapter userListAdapter;
 
@@ -40,6 +43,10 @@ public class UserListFragment extends Fragment implements
     TextView tvHead;
     @BindView(R.id.stickyListHeadersListView)
     StickyListHeadersListView stickyListHeadersListView;
+
+    public void setUserListCallback(IUserListCallback userListCallback) {
+        this.userListCallback = userListCallback;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,7 +61,7 @@ public class UserListFragment extends Fragment implements
         View view = inflater.inflate(R.layout.fragment_userlist, null);
         ButterKnife.bind(this, view);
 
-        tvHead.setText(R.string.nav_userlist);
+        tvHead.setText(R.string.tab_userlist);
 
         Context context = getContext();
 
@@ -66,7 +73,7 @@ public class UserListFragment extends Fragment implements
         stickyListHeadersListView.setOnStickyHeaderOffsetChangedListener(this);
 //        stickyListHeadersListView.addHeaderView(getLayoutInflater().inflate(R.layout.list_header, null));
 //        stickyListHeadersListView.addFooterView(getLayoutInflater().inflate(R.layout.list_footer, null));
-        // stickyListHeadersListView.setEmptyView(findViewById(R.id.empty));
+//        stickyListHeadersListView.setEmptyView(findViewById(R.id.empty));
         stickyListHeadersListView.setDrawingListUnderStickyHeader(true);
         stickyListHeadersListView.setAreHeadersSticky(true);
         stickyListHeadersListView.setAdapter(userListAdapter);
@@ -92,7 +99,7 @@ public class UserListFragment extends Fragment implements
         super.setArguments(args);
     }
 
-    public void fresh(List<UserBean> list) {
+    public void freshUserList(List<UserBean> list) {
         this.userList = list;
         userListAdapter.freshUserList(list);
     }
@@ -115,6 +122,8 @@ public class UserListFragment extends Fragment implements
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Log.d(TAG, "onItemClick: position=" + position);
-        ((MainActivity) getContext()).onUserItemClick(userList.get(position));
+        if (userListCallback != null) {
+            userListCallback.onUserItemClick(userList.get(position));
+        }
     }
 }

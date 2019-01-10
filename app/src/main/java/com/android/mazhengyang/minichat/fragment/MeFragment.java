@@ -5,19 +5,14 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.util.ImageLoaderUtils;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
 import com.android.mazhengyang.minichat.widget.WaveView;
@@ -58,17 +53,6 @@ public class MeFragment extends Fragment {
         ButterKnife.bind(this, view);
 
         Context context = getContext();
-
-//        ImageLoaderUtils.displayRound(getContext(),ivLogo,R.drawable.github);
-//        final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2);
-//        lp.gravity = Gravity.CENTER;
-//        waveView.setOnWaveAnimationListener(new WaveView.OnWaveAnimationListener() {
-//            @Override
-//            public void OnWaveAnimation(float y) {
-//                lp.setMargins(0, 0, 0, (int) y + 2);
-//                ivLogo.setLayoutParams(lp);
-//            }
-//        });
 
         ivUserIcon.setImageResource(R.drawable.github);
         tvUserNickName.setText(R.string.user_default_nickname);

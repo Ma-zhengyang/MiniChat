@@ -25,6 +25,7 @@ import com.android.mazhengyang.minichat.bean.UserBean;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -40,7 +41,7 @@ public class ChatRoomFragment extends Fragment {
     private static final String TAG = "MiniChat." + ChatRoomFragment.class.getSimpleName();
 
     private UserBean userBean;
-    private Map<String, Queue<MessageBean>> messagesMap;
+    private List<MessageBean> messageBeanList;
     private ChatRoomAdapter chatRoomAdapter;
 
     @BindView(R.id.tv_head)
@@ -55,6 +56,11 @@ public class ChatRoomFragment extends Fragment {
     public void setUserBean(UserBean userBean) {
         Log.d(TAG, "setUserBean: ");
         this.userBean = userBean;
+    }
+
+    public void setMessageBeanList(List<MessageBean> messageBeanList) {
+        Log.d(TAG, "setMessageBeanList: ");
+        this.messageBeanList = messageBeanList;
     }
 
     @Override
@@ -77,7 +83,7 @@ public class ChatRoomFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        chatRoomAdapter = new ChatRoomAdapter(context, messagesMap);
+        chatRoomAdapter = new ChatRoomAdapter(context, messageBeanList);
         recyclerView.setAdapter(chatRoomAdapter);
 
         sendBtn.setOnClickListener(send);
@@ -137,9 +143,9 @@ public class ChatRoomFragment extends Fragment {
         }
     };
 
-    public void fresh(Map<String, Queue<MessageBean>> messagesMap) {
-        this.messagesMap = messagesMap;
-        chatRoomAdapter.freshMessageMap(messagesMap);
+    public void freshMessageList(List<MessageBean> list) {
+        this.messageBeanList = list;
+        chatRoomAdapter.freshMessageList(list);
     }
 
 }

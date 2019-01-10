@@ -10,18 +10,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Queue;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -38,39 +34,21 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_FRIEND = 1;
 
     private SimpleDateFormat format;
-    private List<MessageBean> messageList = new ArrayList<>();//保存聊天信息
+    private List<MessageBean> messageList;//保存聊天信息
 
     private Context context;
 
-    public ChatRoomAdapter(Context context, Map<String, Queue<MessageBean>> messagesMap) {
+    public ChatRoomAdapter(Context context, List<MessageBean> list) {
         Log.d(TAG, "ChatRoomAdapter: ");
         this.context = context;
-//          this.messagesMap = messagesMap;
+        this.messageList = list;
         format = new SimpleDateFormat("HH:mm", Locale.CHINA);
     }
 
-    public void freshMessageMap(Map<String, Queue<MessageBean>> messagesMap) {
+    public void freshMessageList(List<MessageBean> list) {
 
-        String selfIp = NetUtils.getLocalIpAddress();
-
-        Queue<MessageBean> queue = messagesMap.get(selfIp);
-
-        Log.d(TAG, "freshMessageMap: messagesMap size=" + messagesMap.size());
-        Log.d(TAG, "freshMessageMap: queue=" + queue);
-
-        if (queue != null) {
-            Iterator<MessageBean> iterator = queue.iterator();
-            while (iterator.hasNext()) {
-                MessageBean message = iterator.next();
-                switch (message.getType()) {
-                    case UdpThread.MESSAGE_TO_TARGET:
-                        messageList.add(message);
-                        break;
-                }
-            }
-            queue.clear();
-            this.notifyDataSetChanged();
-        }
+        messageList = list;
+        this.notifyDataSetChanged();
     }
 
     @Override
@@ -127,7 +105,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemViewType(int position) {
-
         Log.d(TAG, "getItemViewType: ");
 
         MessageBean messageBean = messageList.get(position);

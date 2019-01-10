@@ -6,9 +6,6 @@ package com.android.mazhengyang.minichat.util;
 
 public class Constant {
 
-    public static final int MESSAGE_FRESH_USERLIST = 1024;
-    public static final int MESSAGE_FRESH_MESSAGE = 1025;
-
     public static final String ENCOD="gbk";
 
     /**文本消息端口*/

@@ -15,15 +15,16 @@
 
     </FrameLayout>
 
-    <android.support.design.widget.BottomNavigationView
-        android:id="@+id/bottom_nav"
+    <android.support.design.widget.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        app:itemBackground="@color/lightGray"
-        app:itemTextColor="@color/deepGray"
-        app:menu="@menu/bottom_nav_menu"
-        app:dayNightBackgroundAttr="dayNightBackground">
-
-    </android.support.design.widget.BottomNavigationView>
+        android:layout_height="?attr/actionBarSize"
+        android:layout_centerVertical="true"
+        android:background="@color/lightGray"
+        app:tabGravity="fill"
+        app:tabIndicatorColor="@color/transparent"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="@color/black"
+        app:tabTextColor="@color/deepGray" />
 
 </LinearLayout>
