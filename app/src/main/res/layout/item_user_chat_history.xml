@@ -2,9 +2,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="10dp"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:layout_margin="10dp">
+    android:orientation="horizontal">
 
     <ImageView
         android:id="@+id/ivUserIcon"
@@ -13,22 +13,32 @@
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true" />
 
+    <com.android.mazhengyang.minichat.widget.BadgeView
+        android:id="@+id/bvUnReadMsgCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/ivUserIcon" />
+
     <TextView
         android:id="@+id/tvUserName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginLeft="5dp"
-        android:layout_toRightOf="@+id/ivUserIcon"
+        android:layout_toRightOf="@+id/bvUnReadMsgCount"
         android:textColor="@color/black"
         android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/tvMessage"
-        android:layout_width="wrap_content"
+        android:id="@+id/tvRecentMessage"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
+        android:layout_marginLeft="20dp"
+        android:layout_toRightOf="@id/tvUserName"
+        android:gravity="right"
+        android:singleLine="true"
         android:textSize="12sp" />
 
 </RelativeLayout>

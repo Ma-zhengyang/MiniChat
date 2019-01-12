@@ -13,6 +13,8 @@ public class UserBean implements Serializable {
     private String deviceCode; //手机设备码
     private boolean isOnline; //是否在线
     private boolean isSelf; //是否是自己
+    private int unReadMsgCount = 0; //未读消息数
+    private String recentMsg; //最近一条消息
 
     public String getUserName() {
         return userName;
@@ -52,5 +54,21 @@ public class UserBean implements Serializable {
 
     public void setSelf(boolean self) {
         isSelf = self;
+    }
+
+    public int getUnReadMsgCount() {
+        return unReadMsgCount;
+    }
+
+    public void setUnReadMsgCount(int unreadMsgCount) {
+        this.unReadMsgCount = unreadMsgCount;
+    }
+
+    public String getRecentMsg() {
+        return recentMsg;
+    }
+
+    public void setRecentMsg(String recentMsg) {
+        this.recentMsg = recentMsg;
     }
 }

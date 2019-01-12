@@ -10,11 +10,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.model.IUserListCallback;
 import com.android.mazhengyang.minichat.util.NetUtils;
+import com.android.mazhengyang.minichat.widget.BadgeView;
 
-import java.util.Date;
 import java.util.List;
 
 import butterknife.BindView;
@@ -30,6 +30,13 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private Context context;
     private List<UserBean> chatedUserList;
+
+    private IUserListCallback userListCallback;
+
+    public void setUserListCallback(IUserListCallback userListCallback) {
+        Log.d(TAG, "setUserListCallback: userListCallback=" + userListCallback);
+        this.userListCallback = userListCallback;
+    }
 
     public ChatHistoryAdapter(Context context, List<UserBean> chatedUserList) {
         Log.d(TAG, "ChatHistoryAdapter: ");
@@ -54,8 +61,6 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         UserBean userBean = chatedUserList.get(position);
-        ((ChatedUserItemViewHolder) holder).tvUserName.setText(userBean.getUserName());
-//        ((ChatedUserItemViewHolder) holder).tvMessage.setText(messageBean.getMsg());
 
         String senderIp = userBean.getUserIp();
         Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
@@ -65,6 +70,10 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
         }
+
+        ((ChatedUserItemViewHolder) holder).bvUnReadMsgCount.setBadgeCount(userBean.getUnReadMsgCount());
+        ((ChatedUserItemViewHolder) holder).tvUserName.setText(userBean.getUserName());
+        ((ChatedUserItemViewHolder) holder).tvRecentMessage.setText(userBean.getRecentMsg());
 
     }
 
@@ -79,18 +88,28 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return count;
     }
 
-    public class ChatedUserItemViewHolder extends RecyclerView.ViewHolder {
+    public class ChatedUserItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         @BindView(R.id.ivUserIcon)
         ImageView ivUserIcon;
+        @BindView(R.id.bvUnReadMsgCount)
+        BadgeView bvUnReadMsgCount;
         @BindView(R.id.tvUserName)
         TextView tvUserName;
-        @BindView(R.id.tvMessage)
-        TextView tvMessage;
+        @BindView(R.id.tvRecentMessage)
+        TextView tvRecentMessage;
 
         public ChatedUserItemViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (userListCallback != null) {
+                userListCallback.onUserItemClick(chatedUserList.get(getPosition()));
+            }
         }
     }
 }

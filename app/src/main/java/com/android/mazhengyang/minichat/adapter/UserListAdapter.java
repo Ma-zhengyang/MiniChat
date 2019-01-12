@@ -131,7 +131,7 @@ public class UserListAdapter extends BaseAdapter implements
 
         if (convertView == null) {
             holder = new ViewHolder();
-            convertView = mInflater.inflate(R.layout.item_user, parent, false);
+            convertView = mInflater.inflate(R.layout.item_userlist, parent, false);
             holder.ivUserIcon = convertView.findViewById(R.id.ivUserIcon);
             holder.tvUserName = convertView.findViewById(R.id.tvUserName);
             holder.tvUserIp = convertView.findViewById(R.id.tvUserIp);

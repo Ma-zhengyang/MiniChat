@@ -168,16 +168,20 @@ public class UdpThread extends Thread {
 
     public void send(MessageBean messageBean) {
 
-        //自己给自己发消息
         String selfIp = NetUtils.getLocalIpAddress();
-        if (selfIp.equals(messageBean.getReceiverIp())) {
+        String receiverIp = messageBean.getReceiverIp();
+
+        //自己给自己发消息，处理一次就行
+        if (selfIp.equals(receiverIp)) {
             freshMessage(messageBean);
             return;
         }
 
+        //对方发消息自己收到才会走handleReceivedMsg，自己发的消息也需要保存
+        freshMessage(messageBean);
+
         //发送给对方
         try {
-            String receiverIp = messageBean.getReceiverIp();
             send(messageBean.toString(), InetAddress.getByName(receiverIp));
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -231,6 +235,7 @@ public class UdpThread extends Thread {
         messageBean.setDeviceCode(Build.DEVICE);
         messageBean.setMsg(message);
         messageBean.setType(type);
+        messageBean.setReaded(false);
         return messageBean;
     }
 
@@ -287,6 +292,10 @@ public class UdpThread extends Thread {
                     if (!selfIp.equals(senderIp)) {
                         send(packUdpMessage(Constant.ALL_ADDRESS, "", ACTION_ONLINED).toString(),
                                 datagramPacket.getAddress());
+                    }
+
+                    for (UserBean user : userList) {
+                        Log.d(TAG, "handleReceivedMsg: user ip=" + user.getUserIp());
                     }
                     freshUserList(userList);
 

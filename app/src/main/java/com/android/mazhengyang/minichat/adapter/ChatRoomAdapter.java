@@ -14,7 +14,6 @@ import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -57,12 +56,12 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         if (viewType == TYPE_SELF) {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_message_self, parent, false);
+                    .inflate(R.layout.item_message_send, parent, false);
             UserItemViewHolder vh = new UserItemViewHolder(v);
             return vh;
         } else {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_message, parent, false);
+                    .inflate(R.layout.item_message_receive, parent, false);
             UserItemViewHolder vh = new UserItemViewHolder(v);
             return vh;
         }

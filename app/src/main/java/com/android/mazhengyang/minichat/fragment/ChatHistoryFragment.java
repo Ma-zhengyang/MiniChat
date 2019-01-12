@@ -16,6 +16,7 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.ChatHistoryAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.model.IUserListCallback;
 
 import java.util.List;
 import java.util.Map;
@@ -36,17 +37,33 @@ public class ChatHistoryFragment extends Fragment {
 
     private ChatHistoryAdapter chatHistoryAdapter;
 
+    private IUserListCallback userListCallback;
+
     @BindView(R.id.tv_head)
     TextView tvHead;
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
 
     public void setChatedUserList(List<UserBean> chatedUserList) {
+        Log.d(TAG, "setChatedUserList: ");
         this.chatedUserList = chatedUserList;
+    }
+
+    public void updateChatedUserList() {
+        Log.d(TAG, "updateChatedUserList: ");
+        if (chatHistoryAdapter != null) {
+            chatHistoryAdapter.notifyDataSetChanged();
+        }
+    }
+
+    public void setUserListCallback(IUserListCallback userListCallback) {
+        Log.d(TAG, "setUserListCallback: ");
+        this.userListCallback = userListCallback;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
     }
 
@@ -65,6 +82,7 @@ public class ChatHistoryFragment extends Fragment {
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
         chatHistoryAdapter = new ChatHistoryAdapter(context, chatedUserList);
+        chatHistoryAdapter.setUserListCallback(userListCallback);
         recyclerView.setAdapter(chatHistoryAdapter);
 
         return view;

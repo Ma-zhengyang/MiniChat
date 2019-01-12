@@ -18,6 +18,7 @@ public class MessageBean {
     private String sendTime; //发送时间
     private String deviceCode;//手机唯一识别号
     private int type;//当前消息的类型
+    private boolean readed = false;//消息是否已读
 
     public MessageBean() {
         sendTime = System.currentTimeMillis() + "";//TODO, 这里显示的是本机时间，并不是对方的时间，可能错乱的
@@ -31,6 +32,7 @@ public class MessageBean {
         msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
         type = object.getInt("type");
         sendTime = object.getString("sendTime");
+        readed = object.getBoolean("readed");
     }
 
     /**
@@ -46,6 +48,7 @@ public class MessageBean {
             object.put("msg", Base64.encodeToString(msg.getBytes(), Base64.DEFAULT));
             object.put("type", type);
             object.put("sendTime", System.currentTimeMillis() + "");
+            object.put("readed", readed);
             return object.toString();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -109,4 +112,11 @@ public class MessageBean {
         this.type = type;
     }
 
+    public boolean isReaded() {
+        return readed;
+    }
+
+    public void setReaded(boolean readed) {
+        this.readed = readed;
+    }
 }

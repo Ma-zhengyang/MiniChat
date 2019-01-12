@@ -44,10 +44,14 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
     public static final int MESSAGE_FRESH_USERLIST = 1024;
     public static final int MESSAGE_FRESH_MESSAGE = 1025;
+    public static final int MESSAGE_FRESH_MESSAGE_INDICATOR = 1026;
 
     private static final int INDEX_CHAT_HISTORY = 0;
     private static final int INDEX_USERLIST = 1;
     private static final int INDEX_ME = 2;
+    private static final int INDEX_CHATROOM = 3;
+    private int indexPervious;
+    private int indexCurrent;
 
     @BindView(R.id.tab_layout)
     TabLayout tabLayout;
@@ -62,18 +66,16 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private ChatRoomFragment chatRoomFragment;
     private Fragment currentFragment;
 
-    //当前在聊天的朋友
-    private UserBean currentUserBean;
     //用户列表
     private List<UserBean> userList;
+    //正在和自己聊天的对方用户
+    private UserBean currentChatingUser;
     //聊过天的用户列表
     private List<UserBean> chatedUserList = new ArrayList<>();
-    //记录未读消息数量
-    private int newMessageCount = 0;
-    //保存用户发的消息，每个ip都会开启一个消息队列来缓存消息
-    //String   用户ip地址
-    //List<MessageBean>  对应ip的聊天内容
-    private Map<String, List<MessageBean>> messageBeanList = new ConcurrentHashMap<>();
+    //保存消息
+    //String   对方ip地址
+    //List<MessageBean>  和对方的聊天内容
+    private Map<String, List<MessageBean>> messageList = new ConcurrentHashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,8 +137,19 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
     @Override
     public void onBackPressed() {
-        if (currentFragment != userListFragment) {
-            showFragment(userListFragment);
+        Log.d(TAG, "onBackPressed: ");
+        if (currentFragment == chatRoomFragment) {
+            switch (indexPervious) {
+                case INDEX_CHAT_HISTORY:
+                    showFragment(chatHistoryFragment);
+                    break;
+                case INDEX_USERLIST:
+                    showFragment(userListFragment);
+                    break;
+                case INDEX_ME:
+                    showFragment(meFragment);
+                    break;
+            }
             return;
         }
         super.onBackPressed();
@@ -172,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         View tabView;
         if (withBadgeView) {
             tabView = LayoutInflater.from(this).inflate(R.layout.tab_item_with_badgeview, null);
-            badgeView = tabView.findViewById(R.id.bv_count);
+            badgeView = tabView.findViewById(R.id.bvUnReadMsgCount);
         } else {
             tabView = LayoutInflater.from(this).inflate(R.layout.tab_item, null);
         }
@@ -215,6 +228,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                     case INDEX_CHAT_HISTORY:
                         if (chatHistoryFragment == null) {
                             chatHistoryFragment = new ChatHistoryFragment();
+                            chatHistoryFragment.setUserListCallback(MainActivity.this);
                         }
                         chatHistoryFragment.setChatedUserList(chatedUserList);
                         showFragment(chatHistoryFragment);
@@ -255,12 +269,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         if (fragment != null && fragment != currentFragment) {
 
-            if (fragment == chatRoomFragment) {
-                tabLayout.setVisibility(View.GONE);
-            } else {
-                tabLayout.setVisibility(View.VISIBLE);
-            }
-
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_content, fragment)
@@ -270,14 +278,25 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
             if (fragment == chatHistoryFragment) {
                 tabLayout.getTabAt(INDEX_CHAT_HISTORY).select();
+                indexCurrent = INDEX_CHAT_HISTORY;
             } else if (fragment == userListFragment) {
                 tabLayout.getTabAt(INDEX_USERLIST).select();
+                indexCurrent = INDEX_USERLIST;
             } else if (fragment == meFragment) {
                 tabLayout.getTabAt(INDEX_ME).select();
+                indexCurrent = INDEX_ME;
+            }
+
+            if (fragment == chatRoomFragment) {
+                tabLayout.setVisibility(View.GONE);
+                indexPervious = indexCurrent;
+                indexCurrent = INDEX_CHATROOM;
+            } else {
+                tabLayout.setVisibility(View.VISIBLE);
             }
 
             if (currentFragment != chatRoomFragment) {
-                currentUserBean = null;
+                currentChatingUser = null;
             }
 
         }
@@ -293,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             switch (msg.what) {
                 case MESSAGE_FRESH_USERLIST:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_USERLIST");
+
                     if (userListFragment != null) {
                         userListFragment.freshUserList(userList);
                     }
@@ -300,11 +320,15 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                 case MESSAGE_FRESH_MESSAGE:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE");
 
-                    badgeView.setBadgeCount(newMessageCount);
+                    List<MessageBean> list = messageList.get(currentChatingUser.getUserIp());
+                    chatRoomFragment.freshMessageList(list);
+                    break;
+                case MESSAGE_FRESH_MESSAGE_INDICATOR:
+                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE_INDICATOR");
 
-                    if (currentUserBean != null) {
-                        List<MessageBean> list = messageBeanList.get(currentUserBean.getUserIp());
-                        chatRoomFragment.freshMessageList(list);
+                    updateUnReadIndicator();
+                    if (chatHistoryFragment != null) {
+                        chatHistoryFragment.updateChatedUserList();
                     }
                     break;
                 default:
@@ -333,41 +357,115 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     public void freshMessage(MessageBean messageBean) {
 
         String senderIp = messageBean.getSenderIp();
-        if (messageBeanList.containsKey(senderIp)) {
-            List<MessageBean> list = messageBeanList.get(senderIp);
+        String receiverIp = messageBean.getReceiverIp();
+        String selfIp = NetUtils.getLocalIpAddress();
+
+        UserBean whoSend = null;//这条消息是谁发来的
+        UserBean whoReceiver = null;//这条消息是谁接收的的
+        for (UserBean userBean : userList) {
+            if (whoSend == null) {
+                if (userBean.getUserIp().equals(senderIp)) {
+                    whoSend = userBean;
+                    Log.d(TAG, "freshMessage: whoSend=" + whoSend.getUserName());
+                }
+            }
+            if (whoReceiver == null) {
+                if (userBean.getUserIp().equals(receiverIp)) {
+                    whoReceiver = userBean;
+                    Log.d(TAG, "freshMessage: whoReceiver=" + whoReceiver.getUserName());
+                }
+            }
+            if (whoSend != null && whoReceiver != null) {
+                break;
+            }
+        }
+
+        //把消息存入列表
+        String key;
+        if (senderIp.equals(selfIp)) {//我发给对方的,key是receiverIp
+            key = receiverIp;
+        } else {//对方发给我的,key是senderIp
+            key = senderIp;
+        }
+        if (messageList.containsKey(key)) {
+            List<MessageBean> list = messageList.get(key);
             list.add(messageBean);
         } else {
             List<MessageBean> list = new ArrayList<>();
             list.add(messageBean);
-            messageBeanList.put(senderIp, list);
+            messageList.put(key, list);
         }
 
-        String receiverIp = messageBean.getReceiverIp();
-        if (senderIp.equals(receiverIp)) {
-            //在自己和自己发消息，不需更新显示红点数量
-        } else if (currentFragment == chatRoomFragment) {
-            if (currentUserBean.getUserIp().equals(senderIp)) {
-                //正和发消息的朋友聊天，不需更新显示红点数量
-            } else {
-                newMessageCount++;
-            }
-        } else {
-            newMessageCount++;
-        }
+        if (currentFragment == chatRoomFragment) {//正在聊天界面
 
-        //更新记录聊过天的朋友
-        //TODO 查找需优化
-        for (UserBean userBean : userList) {
-            if (userBean.getUserIp().equals(senderIp)) {
-                if (!chatedUserList.contains(userBean)) {
-                    chatedUserList.add(userBean);
-                    break;
+            Log.d(TAG, "freshMessage: current is in chatRoomFragment");
+
+            if (currentChatingUser.getUserIp().equals(selfIp)) { //当前聊天界面用户对象就是自己
+                Log.d(TAG, "freshMessage: current chat view is self");
+                if (senderIp.equals(receiverIp)) {//自己和自己发消息，无需处理
+                    Log.d(TAG, "freshMessage: message send by self");
+                    messageBean.setReaded(true);
+                } else {//别人消息进来
+                    Log.d(TAG, "freshMessage: message send by other");
+                    int unReadMsgCount = whoSend.getUnReadMsgCount();
+                    whoSend.setUnReadMsgCount(++unReadMsgCount);
                 }
+                if (!chatedUserList.contains(whoSend)) {
+                    chatedUserList.add(whoSend);
+                }
+                whoSend.setRecentMsg(messageBean.getMsg());
+            } else {//当前正在和朋友聊天
+                String ip = currentChatingUser.getUserIp();
+                //消息是当前正在聊天的朋友发的，不需处理
+                if (ip.equals(senderIp)) {//对方发消息时
+                    Log.d(TAG, "freshMessage: 11111");
+                    messageBean.setReaded(true);
+
+                    if (!chatedUserList.contains(whoSend)) {
+                        chatedUserList.add(whoSend);
+                    }
+                    whoSend.setRecentMsg(messageBean.getMsg());
+                } else if (ip.equals(receiverIp)) {//自己发消息时
+                    Log.d(TAG, "freshMessage: 22222");
+                    messageBean.setReaded(true);
+
+                    if (!chatedUserList.contains(whoReceiver)) {
+                        chatedUserList.add(whoReceiver);
+                    }
+                    whoReceiver.setRecentMsg(messageBean.getMsg());
+                } else {
+                    //第三方朋友消息进来
+                    Log.d(TAG, "freshMessage: 33333");
+                    if (whoSend != null) {
+                        int unReadMsgCount = whoSend.getUnReadMsgCount();
+                        whoSend.setUnReadMsgCount(++unReadMsgCount);
+                        if (!chatedUserList.contains(whoSend)) {
+                            chatedUserList.add(whoSend);
+                        }
+                        whoSend.setRecentMsg(messageBean.getMsg());
+                    }
+                }
+            }
+
+        } else {//当前不在聊天界面
+
+            Log.d(TAG, "freshMessage: current is not in chatRoomFragment");
+
+            if (whoSend != null) {
+                int unReadMsgCount = whoSend.getUnReadMsgCount();
+                whoSend.setUnReadMsgCount(++unReadMsgCount);
+                if (!chatedUserList.contains(whoSend)) {
+                    chatedUserList.add(whoSend);
+                }
+                whoSend.setRecentMsg(messageBean.getMsg());
             }
         }
 
         //在UdpThread回调，必须放到主线程更新UI
-        mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);
+        if (currentFragment == chatRoomFragment) {
+            mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);
+        }
+        mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE_INDICATOR);
     }
 
     /**
@@ -381,20 +479,23 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         }
 
         chatRoomFragment.setUserBean(user);
-        currentUserBean = user;
-        List<MessageBean> list = messageBeanList.get(user.getUserIp());
+        List<MessageBean> list = messageList.get(user.getUserIp());
         chatRoomFragment.setMessageBeanList(list);
         showFragment(chatRoomFragment);
+        currentChatingUser = user;
 
-
-        //进入自己和自己发消息界面，不清除红点
-        if (user.getUserIp().equals(NetUtils.getLocalIpAddress())) {
-            Log.d(TAG, "onUserItemClick: chat with self");
-        } else {
-            newMessageCount = 0;
-            badgeView.setBadgeCount(0);
+        if (!user.getUserIp().equals(NetUtils.getLocalIpAddress())) {
+            user.setUnReadMsgCount(0);
+            updateUnReadIndicator();
         }
+    }
 
+    private void updateUnReadIndicator() {
+        int totleUnReadCount = 0;
+        for (UserBean userBean : chatedUserList) {
+            totleUnReadCount += userBean.getUnReadMsgCount();
+        }
+        badgeView.setBadgeCount(totleUnReadCount);
     }
 
 }
