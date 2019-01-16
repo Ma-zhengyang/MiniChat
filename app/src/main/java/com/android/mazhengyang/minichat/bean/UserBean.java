@@ -15,6 +15,7 @@ public class UserBean implements Serializable {
     private boolean isSelf; //是否是自己
     private int unReadMsgCount = 0; //未读消息数
     private String recentMsg; //最近一条消息
+    private String recentTime; //最近一条消息时间
 
     public String getUserName() {
         return userName;
@@ -70,5 +71,13 @@ public class UserBean implements Serializable {
 
     public void setRecentMsg(String recentMsg) {
         this.recentMsg = recentMsg;
+    }
+
+    public String getRecentTime() {
+        return recentTime;
+    }
+
+    public void setRecentTime(String recentTime) {
+        this.recentTime = recentTime;
     }
 }

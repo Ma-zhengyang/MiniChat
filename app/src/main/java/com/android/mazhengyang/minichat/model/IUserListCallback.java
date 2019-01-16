@@ -8,7 +8,7 @@ import com.android.mazhengyang.minichat.bean.UserBean;
 
 public interface IUserListCallback {
 
-    //UserListFragment中調用，MainActivity中实现
+    //UserListFragment, ChatHistoryFragment中調用，MainActivity中实现
 
     void onUserItemClick(UserBean user);
 

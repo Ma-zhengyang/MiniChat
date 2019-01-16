@@ -1,6 +1,7 @@
 package com.android.mazhengyang.minichat.bean;
 
 import android.util.Base64;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,17 +12,19 @@ import org.json.JSONObject;
 
 public class MessageBean {
 
+    private static final String TAG = "MiniChat." + MessageBean.class.getSimpleName();
+
     private String senderName; //消息发送者的名字
     private String senderIp; //发送者ip
     private String receiverIp; //接收者ip
     private String msg; //信息内容
-    private String sendTime; //发送时间
+    private String sendTime; //发送时间 TODO, 这里显示的是本机时间，并不是对方的时间，可能错乱的
     private String deviceCode;//手机唯一识别号
     private int type;//当前消息的类型
     private boolean readed = false;//消息是否已读
 
     public MessageBean() {
-        sendTime = System.currentTimeMillis() + "";//TODO, 这里显示的是本机时间，并不是对方的时间，可能错乱的
+        Log.d(TAG, "MessageBean: ");
     }
 
     public MessageBean(JSONObject object) throws JSONException {
@@ -39,15 +42,15 @@ public class MessageBean {
      * 采用JSONObject数据结构
      */
     public String toString() {
-        JSONObject object = new JSONObject();
         try {
+            JSONObject object = new JSONObject();
             object.put("senderName", Base64.encodeToString(senderName.getBytes(), Base64.DEFAULT));
             object.put("senderIp", senderIp);
             object.put("receiverIp", receiverIp);
             object.put("deviceCode", deviceCode);
             object.put("msg", Base64.encodeToString(msg.getBytes(), Base64.DEFAULT));
             object.put("type", type);
-            object.put("sendTime", System.currentTimeMillis() + "");
+            object.put("sendTime", sendTime);
             object.put("readed", readed);
             return object.toString();
         } catch (JSONException e) {

@@ -8,6 +8,7 @@ import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
 import com.android.mazhengyang.minichat.util.Constant;
 import com.android.mazhengyang.minichat.util.NetUtils;
+import com.android.mazhengyang.minichat.util.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,6 +21,8 @@ import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,23 +38,30 @@ public class UdpThread extends Thread {
     public static final int ACTION_OFFLINE = ACTION_ONLINE + 1;//下线
     public static final int ACTION_ONLINED = ACTION_OFFLINE + 1;//登录成功，用来反馈对方
 
-    public static final int MESSAGE_TO_ALL = 2000;//广播,发送消息给全部ip
+    public static final int MESSAGE_TO_ALL = 2000;//发送消息给全部ip地址段
     public static final int MESSAGE_TO_TARGET = MESSAGE_TO_ALL + 1;//发送消息给指定ip
 
-    private boolean isOnline;
     //用于接收和发送数据的socket，DatagramSocket只能向指定地址发送，MulticastSocket能实现多点广播
     private MulticastSocket multicastSocket;
     private DatagramPacket datagramPacket;
-    //保存用户列表
-    private List<UserBean> userList = new ArrayList<>();
+    private ExecutorService executorService;
+    private boolean isOnline;
 
     private int port = Constant.MESSAGE_PORT;
     private final static int DEFAULT_BUFFERSIZE = 1024 * 2;
     private byte[] bufferData;
 
-    private ExecutorService executorService;
+    //用户列表
+    private List<UserBean> userList = new ArrayList<>();
+    //聊过天的用户列表
+    private List<UserBean> chatedUserList = new ArrayList<>();
+    //保存消息  String对方ip地址, List<MessageBean>聊天内容
+    private Map<String, List<MessageBean>> messageList = new ConcurrentHashMap<>();
 
-    private ISocketCallback socketCallback;
+    //正在和自己聊天的对方用户
+    private UserBean chattingUser;
+
+    private ISocketCallback listener;
 
     private static UdpThread instance;
 
@@ -63,7 +73,15 @@ public class UdpThread extends Thread {
     }
 
     public void setSocketCallback(ISocketCallback socketCallback) {
-        this.socketCallback = socketCallback;
+        this.listener = socketCallback;
+    }
+
+    public void setChattingUser(UserBean userBean) {
+        this.chattingUser = userBean;
+    }
+
+    public UserBean getChattingUser() {
+        return chattingUser;
     }
 
     @Override
@@ -135,7 +153,7 @@ public class UdpThread extends Thread {
                         }
                     }
 
-                    //正常relese方式退出的，能send
+                    //正常release方式退出的，能send
                     send(packUdpMessage(Constant.ALL_ADDRESS, "", ACTION_OFFLINE).toString(),
                             InetAddress.getByName(Constant.ALL_ADDRESS));
                 }
@@ -234,6 +252,7 @@ public class UdpThread extends Thread {
         messageBean.setReceiverIp(receiverIp);
         messageBean.setDeviceCode(Build.DEVICE);
         messageBean.setMsg(message);
+        messageBean.setSendTime(Utils.formatTime(System.currentTimeMillis()));
         messageBean.setType(type);
         messageBean.setReaded(false);
         return messageBean;
@@ -262,8 +281,7 @@ public class UdpThread extends Thread {
             switch (messageBean.getType()) {
                 case ACTION_ONLINE: //来自noticeOnline中的群播，每个用户都会收到，包括自己
                     Log.d(TAG, "handleReceivedMsg: ACTION_ONLINE");
-
-                    boolean isOld = false;
+                    boolean isExist = false;
                     //user已经存在，直接更新在线状态
                     for (UserBean user : userList) {
                         if (user.getUserIp().equals(senderIp)) {
@@ -271,12 +289,12 @@ public class UdpThread extends Thread {
                             if (!user.isOnline()) {
                                 user.setOnline(true);
                             }
-                            isOld = true;
+                            isExist = true;
                             break;
                         }
                     }
 
-                    if (!isOld) {
+                    if (!isExist) {
                         //新user，加入
                         Log.d(TAG, "handleReceivedMsg: " + senderIp + " not existed, add it.");
                         UserBean newUser = new UserBean();
@@ -294,11 +312,7 @@ public class UdpThread extends Thread {
                                 datagramPacket.getAddress());
                     }
 
-                    for (UserBean user : userList) {
-                        Log.d(TAG, "handleReceivedMsg: user ip=" + user.getUserIp());
-                    }
                     freshUserList(userList);
-
                     break;
                 case ACTION_OFFLINE:
                     Log.d(TAG, "handleReceivedMsg: ACTION_OFFLINE");
@@ -340,22 +354,139 @@ public class UdpThread extends Thread {
     }
 
 
+    /**
+     * 刷新用户列表
+     *
+     * @param userList
+     */
     private void freshUserList(List<UserBean> userList) {
-        if (socketCallback != null) {
-            Log.d(TAG, "freshUserList: ");
-            socketCallback.freshUserList(userList);
-        } else {
-            Log.e(TAG, "freshUserList: socketCallback=null");
+        Log.d(TAG, "freshUserList: start");
+        if (listener != null) {
+            listener.freshUserList(userList);
         }
+        Log.d(TAG, "freshUserList: end");
     }
 
+    /**
+     * 刷新消息列表
+     *
+     * @param messageBean
+     */
     private void freshMessage(MessageBean messageBean) {
-        if (socketCallback != null) {
-            Log.d(TAG, "freshMessage: ");
-            socketCallback.freshMessage(messageBean);
-        } else {
-            Log.e(TAG, "freshUserList: socketCallback=null");
+        Log.d(TAG, "freshMessage: start");
+
+        String senderIp = messageBean.getSenderIp();
+        String receiverIp = messageBean.getReceiverIp();
+        String selfIp = NetUtils.getLocalIpAddress();
+
+        UserBean whoSend = null;//这条消息是谁发来的
+        UserBean whoReceiver = null;//这条消息是谁接收的
+        for (UserBean userBean : userList) {
+            if (whoSend == null) {
+                if (userBean.getUserIp().equals(senderIp)) {
+                    whoSend = userBean;
+                    Log.d(TAG, "freshMessage: whoSend=" + whoSend.getUserName());
+                }
+            }
+            if (whoReceiver == null) {
+                if (userBean.getUserIp().equals(receiverIp)) {
+                    whoReceiver = userBean;
+                    Log.d(TAG, "freshMessage: whoReceiver=" + whoReceiver.getUserName());
+                }
+            }
+            if (whoSend != null && whoReceiver != null) {
+                break;
+            }
         }
+
+        //把消息存入列表
+        String key;
+        if (senderIp.equals(selfIp)) {//我发给对方的,key是receiverIp
+            key = receiverIp;
+        } else {//对方发给我的,key是senderIp
+            key = senderIp;
+        }
+        if (messageList.containsKey(key)) {
+            List<MessageBean> list = messageList.get(key);
+            list.add(messageBean);
+        } else {
+            List<MessageBean> list = new ArrayList<>();
+            list.add(messageBean);
+            messageList.put(key, list);
+        }
+
+        if (listener != null) {
+            listener.freshMessage(messageList);
+        }
+
+
+        if (chattingUser != null) {//正在聊天界面
+            Log.d(TAG, "freshMessage: current is in chatRoomFragment");
+
+            if (chattingUser.getUserIp().equals(selfIp)) { //当前聊天界面用户对象就是自己
+                Log.d(TAG, "freshMessage: current chat view is self");
+                if (senderIp.equals(receiverIp)) {//自己和自己发消息，无需设置未读
+                    Log.d(TAG, "freshMessage: message send by self");
+                    messageBean.setReaded(true);
+                } else {//别人消息进来
+                    Log.d(TAG, "freshMessage: message send by other");
+                    int unReadMsgCount = whoSend.getUnReadMsgCount();
+                    whoSend.setUnReadMsgCount(++unReadMsgCount);
+                }
+                if (!chatedUserList.contains(whoSend)) {
+                    chatedUserList.add(whoSend);
+                }
+                whoSend.setRecentMsg(messageBean.getMsg());
+                whoSend.setRecentTime(messageBean.getSendTime());
+            } else {//当前正在和朋友聊天
+                String ip = chattingUser.getUserIp();
+                //消息是当前正在聊天的朋友发的，不需处理
+                if (ip.equals(senderIp)) {//对方发消息时
+                    messageBean.setReaded(true);
+                    if (!chatedUserList.contains(whoSend)) {
+                        chatedUserList.add(whoSend);
+                    }
+                    whoSend.setRecentMsg(messageBean.getMsg());
+                    whoSend.setRecentTime(messageBean.getSendTime());
+                } else if (ip.equals(receiverIp)) {//自己发消息时
+                    messageBean.setReaded(true);
+                    if (!chatedUserList.contains(whoReceiver)) {
+                        chatedUserList.add(whoReceiver);
+                    }
+                    whoReceiver.setRecentMsg(messageBean.getMsg());
+                    whoReceiver.setRecentTime(messageBean.getSendTime());
+                } else {
+                    //第三方朋友消息进来
+                    if (whoSend != null) {
+                        int unReadMsgCount = whoSend.getUnReadMsgCount();
+                        whoSend.setUnReadMsgCount(++unReadMsgCount);
+                        if (!chatedUserList.contains(whoSend)) {
+                            chatedUserList.add(whoSend);
+                        }
+                        whoSend.setRecentMsg(messageBean.getMsg());
+                        whoSend.setRecentTime(messageBean.getSendTime());
+                    }
+                }
+            }
+
+        } else {//当前不在聊天界面
+            Log.d(TAG, "freshMessage: current is not in chatRoomFragment");
+
+            if (whoSend != null) {
+                int unReadMsgCount = whoSend.getUnReadMsgCount();
+                whoSend.setUnReadMsgCount(++unReadMsgCount);
+                if (!chatedUserList.contains(whoSend)) {
+                    chatedUserList.add(whoSend);
+                }
+                whoSend.setRecentMsg(messageBean.getMsg());
+                whoSend.setRecentTime(messageBean.getSendTime());
+            }
+        }
+        if (listener != null) {
+            listener.freshChattedUserList(chatedUserList);
+        }
+
+        Log.d(TAG, "freshMessage: end");
     }
 
 }

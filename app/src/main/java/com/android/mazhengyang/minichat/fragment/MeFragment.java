@@ -15,7 +15,6 @@ import android.widget.Toast;
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
-import com.android.mazhengyang.minichat.widget.WaveView;
 import com.suke.widget.SwitchButton;
 
 import butterknife.BindView;
@@ -30,10 +29,8 @@ public class MeFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + MeFragment.class.getSimpleName();
 
-    @BindView(R.id.wave_view)
-    WaveView waveView;
-    @BindView(R.id.iv_user_icon)
-    ImageView ivUserIcon;
+    @BindView(R.id.iv_user_head)
+    ImageView ivUserHead;
     @BindView(R.id.tv_user_nickname)
     TextView tvUserNickName;
     @BindView(R.id.daynight_switch_button)
@@ -54,17 +51,8 @@ public class MeFragment extends Fragment {
 
         Context context = getContext();
 
-        ivUserIcon.setImageResource(R.drawable.github);
-        tvUserNickName.setText(R.string.user_default_nickname);
-        final ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) ivUserIcon.getLayoutParams();
-        waveView.setOnWaveAnimationListener(new WaveView.OnWaveAnimationListener() {
-            @Override
-            public void OnWaveAnimation(float y) {
-                //Log.d(TAG, "OnWaveAnimation: y="+y);
-                p.setMargins(p.leftMargin, p.topMargin, p.rightMargin, (int) y + 2);
-                ivUserIcon.setLayoutParams(p);
-            }
-        });
+        tvUserNickName.setText("");
+        ivUserHead.setImageResource(R.drawable.user_friend);
 
         if (ChangeModeHelper.getChangeMode(context) == ChangeModeHelper.MODE_NIGHT) {
             switchButton.setChecked(true);
@@ -93,8 +81,8 @@ public class MeFragment extends Fragment {
         super.onDestroy();
     }
 
-    @OnClick(R.id.iv_user_icon)
-    public void userIconClick() {
+    @OnClick(R.id.head_layout)
+    public void headClick() {
         Toast.makeText(getContext(), R.string.wanshan, Toast.LENGTH_SHORT).show();
     }
 

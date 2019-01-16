@@ -30,10 +30,8 @@ import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeControl
 import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
 import com.android.mazhengyang.minichat.widget.BadgeView;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -44,13 +42,13 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
     public static final int MESSAGE_FRESH_USERLIST = 1024;
     public static final int MESSAGE_FRESH_MESSAGE = 1025;
-    public static final int MESSAGE_FRESH_MESSAGE_INDICATOR = 1026;
+    public static final int MESSAGE_FRESH_CHAT_HISTORY = 1026;
 
     private static final int INDEX_CHAT_HISTORY = 0;
     private static final int INDEX_USERLIST = 1;
     private static final int INDEX_ME = 2;
     private static final int INDEX_CHATROOM = 3;
-    private int indexPervious;
+    private int indexPrevious;
     private int indexCurrent;
 
     @BindView(R.id.tab_layout)
@@ -60,22 +58,17 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private MainHandler mainHandler = new MainHandler();
     private NetWorkStateReceiver netWorkStateReceiver;
     private UdpThread udpThread;
+
     private ChatHistoryFragment chatHistoryFragment;
     private UserListFragment userListFragment;
     private MeFragment meFragment;
     private ChatRoomFragment chatRoomFragment;
     private Fragment currentFragment;
 
-    //用户列表
+    //在UdpThread中实现
     private List<UserBean> userList;
-    //正在和自己聊天的对方用户
-    private UserBean currentChatingUser;
-    //聊过天的用户列表
-    private List<UserBean> chatedUserList = new ArrayList<>();
-    //保存消息
-    //String   对方ip地址
-    //List<MessageBean>  和对方的聊天内容
-    private Map<String, List<MessageBean>> messageList = new ConcurrentHashMap<>();
+    private List<UserBean> chattedUserList;
+    private Map<String, List<MessageBean>> messageListMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     public void onBackPressed() {
         Log.d(TAG, "onBackPressed: ");
         if (currentFragment == chatRoomFragment) {
-            switch (indexPervious) {
+            switch (indexPrevious) {
                 case INDEX_CHAT_HISTORY:
                     showFragment(chatHistoryFragment);
                     break;
@@ -230,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                             chatHistoryFragment = new ChatHistoryFragment();
                             chatHistoryFragment.setUserListCallback(MainActivity.this);
                         }
-                        chatHistoryFragment.setChatedUserList(chatedUserList);
+                        chatHistoryFragment.setChatedUserList(chattedUserList);
                         showFragment(chatHistoryFragment);
                         break;
                     case INDEX_USERLIST:
@@ -269,6 +262,12 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         if (fragment != null && fragment != currentFragment) {
 
+            if (fragment == chatRoomFragment) {
+                tabLayout.setVisibility(View.GONE);
+            } else {
+                tabLayout.setVisibility(View.VISIBLE);
+            }
+
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_content, fragment)
@@ -288,15 +287,10 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             }
 
             if (fragment == chatRoomFragment) {
-                tabLayout.setVisibility(View.GONE);
-                indexPervious = indexCurrent;
+                indexPrevious = indexCurrent;
                 indexCurrent = INDEX_CHATROOM;
             } else {
-                tabLayout.setVisibility(View.VISIBLE);
-            }
-
-            if (currentFragment != chatRoomFragment) {
-                currentChatingUser = null;
+                udpThread.setChattingUser(null);
             }
 
         }
@@ -312,20 +306,20 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             switch (msg.what) {
                 case MESSAGE_FRESH_USERLIST:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_USERLIST");
-
                     if (userListFragment != null) {
                         userListFragment.freshUserList(userList);
                     }
                     break;
                 case MESSAGE_FRESH_MESSAGE:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE");
-
-                    List<MessageBean> list = messageList.get(currentChatingUser.getUserIp());
-                    chatRoomFragment.freshMessageList(list);
+                    UserBean chattingUser = udpThread.getChattingUser();
+                    if (chattingUser != null) {
+                        List<MessageBean> list = messageListMap.get(chattingUser.getUserIp());
+                        chatRoomFragment.freshMessageList(list);
+                    }
                     break;
-                case MESSAGE_FRESH_MESSAGE_INDICATOR:
-                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE_INDICATOR");
-
+                case MESSAGE_FRESH_CHAT_HISTORY:
+                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_CHAT_HISTORY");
                     updateUnReadIndicator();
                     if (chatHistoryFragment != null) {
                         chatHistoryFragment.updateChatedUserList();
@@ -351,121 +345,26 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     /**
      * 刷新消息
      *
-     * @param messageBean
+     * @param listMap
      */
     @Override
-    public void freshMessage(MessageBean messageBean) {
-
-        String senderIp = messageBean.getSenderIp();
-        String receiverIp = messageBean.getReceiverIp();
-        String selfIp = NetUtils.getLocalIpAddress();
-
-        UserBean whoSend = null;//这条消息是谁发来的
-        UserBean whoReceiver = null;//这条消息是谁接收的的
-        for (UserBean userBean : userList) {
-            if (whoSend == null) {
-                if (userBean.getUserIp().equals(senderIp)) {
-                    whoSend = userBean;
-                    Log.d(TAG, "freshMessage: whoSend=" + whoSend.getUserName());
-                }
-            }
-            if (whoReceiver == null) {
-                if (userBean.getUserIp().equals(receiverIp)) {
-                    whoReceiver = userBean;
-                    Log.d(TAG, "freshMessage: whoReceiver=" + whoReceiver.getUserName());
-                }
-            }
-            if (whoSend != null && whoReceiver != null) {
-                break;
-            }
-        }
-
-        //把消息存入列表
-        String key;
-        if (senderIp.equals(selfIp)) {//我发给对方的,key是receiverIp
-            key = receiverIp;
-        } else {//对方发给我的,key是senderIp
-            key = senderIp;
-        }
-        if (messageList.containsKey(key)) {
-            List<MessageBean> list = messageList.get(key);
-            list.add(messageBean);
-        } else {
-            List<MessageBean> list = new ArrayList<>();
-            list.add(messageBean);
-            messageList.put(key, list);
-        }
-
-        if (currentFragment == chatRoomFragment) {//正在聊天界面
-
-            Log.d(TAG, "freshMessage: current is in chatRoomFragment");
-
-            if (currentChatingUser.getUserIp().equals(selfIp)) { //当前聊天界面用户对象就是自己
-                Log.d(TAG, "freshMessage: current chat view is self");
-                if (senderIp.equals(receiverIp)) {//自己和自己发消息，无需处理
-                    Log.d(TAG, "freshMessage: message send by self");
-                    messageBean.setReaded(true);
-                } else {//别人消息进来
-                    Log.d(TAG, "freshMessage: message send by other");
-                    int unReadMsgCount = whoSend.getUnReadMsgCount();
-                    whoSend.setUnReadMsgCount(++unReadMsgCount);
-                }
-                if (!chatedUserList.contains(whoSend)) {
-                    chatedUserList.add(whoSend);
-                }
-                whoSend.setRecentMsg(messageBean.getMsg());
-            } else {//当前正在和朋友聊天
-                String ip = currentChatingUser.getUserIp();
-                //消息是当前正在聊天的朋友发的，不需处理
-                if (ip.equals(senderIp)) {//对方发消息时
-                    Log.d(TAG, "freshMessage: 11111");
-                    messageBean.setReaded(true);
-
-                    if (!chatedUserList.contains(whoSend)) {
-                        chatedUserList.add(whoSend);
-                    }
-                    whoSend.setRecentMsg(messageBean.getMsg());
-                } else if (ip.equals(receiverIp)) {//自己发消息时
-                    Log.d(TAG, "freshMessage: 22222");
-                    messageBean.setReaded(true);
-
-                    if (!chatedUserList.contains(whoReceiver)) {
-                        chatedUserList.add(whoReceiver);
-                    }
-                    whoReceiver.setRecentMsg(messageBean.getMsg());
-                } else {
-                    //第三方朋友消息进来
-                    Log.d(TAG, "freshMessage: 33333");
-                    if (whoSend != null) {
-                        int unReadMsgCount = whoSend.getUnReadMsgCount();
-                        whoSend.setUnReadMsgCount(++unReadMsgCount);
-                        if (!chatedUserList.contains(whoSend)) {
-                            chatedUserList.add(whoSend);
-                        }
-                        whoSend.setRecentMsg(messageBean.getMsg());
-                    }
-                }
-            }
-
-        } else {//当前不在聊天界面
-
-            Log.d(TAG, "freshMessage: current is not in chatRoomFragment");
-
-            if (whoSend != null) {
-                int unReadMsgCount = whoSend.getUnReadMsgCount();
-                whoSend.setUnReadMsgCount(++unReadMsgCount);
-                if (!chatedUserList.contains(whoSend)) {
-                    chatedUserList.add(whoSend);
-                }
-                whoSend.setRecentMsg(messageBean.getMsg());
-            }
-        }
-
+    public void freshMessage(Map<String, List<MessageBean>> listMap) {
         //在UdpThread回调，必须放到主线程更新UI
+        this.messageListMap = listMap;
         if (currentFragment == chatRoomFragment) {
             mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);
         }
-        mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE_INDICATOR);
+    }
+
+    /**
+     * 刷新聊过天的用户列表
+     *
+     * @param list
+     */
+    @Override
+    public void freshChattedUserList(List<UserBean> list) {
+        this.chattedUserList = list;
+        mainHandler.sendEmptyMessage(MESSAGE_FRESH_CHAT_HISTORY);
     }
 
     /**
@@ -479,10 +378,11 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         }
 
         chatRoomFragment.setUserBean(user);
-        List<MessageBean> list = messageList.get(user.getUserIp());
-        chatRoomFragment.setMessageBeanList(list);
+        if (messageListMap != null) {
+            chatRoomFragment.setMessageBeanList(messageListMap.get(user.getUserIp()));
+        }
         showFragment(chatRoomFragment);
-        currentChatingUser = user;
+        udpThread.setChattingUser(user);
 
         if (!user.getUserIp().equals(NetUtils.getLocalIpAddress())) {
             user.setUnReadMsgCount(0);
@@ -490,12 +390,17 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         }
     }
 
+    /**
+     * 更新未读消息数
+     */
     private void updateUnReadIndicator() {
-        int totleUnReadCount = 0;
-        for (UserBean userBean : chatedUserList) {
-            totleUnReadCount += userBean.getUnReadMsgCount();
+        int totel = 0;
+        if (chattedUserList != null) {
+            for (UserBean userBean : chattedUserList) {
+                totel += userBean.getUnReadMsgCount();
+            }
         }
-        badgeView.setBadgeCount(totleUnReadCount);
+        badgeView.setBadgeCount(totel);
     }
 
 }

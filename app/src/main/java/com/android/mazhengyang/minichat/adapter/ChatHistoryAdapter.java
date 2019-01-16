@@ -74,6 +74,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ((ChatedUserItemViewHolder) holder).bvUnReadMsgCount.setBadgeCount(userBean.getUnReadMsgCount());
         ((ChatedUserItemViewHolder) holder).tvUserName.setText(userBean.getUserName());
         ((ChatedUserItemViewHolder) holder).tvRecentMessage.setText(userBean.getRecentMsg());
+        ((ChatedUserItemViewHolder) holder).tvRecentTime.setText(userBean.getRecentTime());
 
     }
 
@@ -98,6 +99,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView tvUserName;
         @BindView(R.id.tvRecentMessage)
         TextView tvRecentMessage;
+        @BindView(R.id.tvRecentTime)
+        TextView tvRecentTime;
 
         public ChatedUserItemViewHolder(View itemView) {
             super(itemView);

@@ -13,10 +13,7 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,7 +29,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_SELF = 0;
     private static final int TYPE_FRIEND = 1;
 
-    private SimpleDateFormat format;
     private List<MessageBean> messageList;//保存聊天信息
 
     private Context context;
@@ -41,7 +37,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         Log.d(TAG, "ChatRoomAdapter: ");
         this.context = context;
         this.messageList = list;
-        format = new SimpleDateFormat("HH:mm", Locale.CHINA);
     }
 
     public void freshMessageList(List<MessageBean> list) {
@@ -76,7 +71,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
 
         MessageBean messageBean = messageList.get(position);
-        ((UserItemViewHolder) holder).tvTime.setText(format.format(new Date(Long.valueOf(messageBean.getSendTime()))));
+        ((UserItemViewHolder) holder).tvTime.setText(messageBean.getSendTime());
         ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMsg());
 
         String senderIp = messageBean.getSenderIp();
