@@ -13,8 +13,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
-import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
+import com.android.mazhengyang.minichat.util.DayNightController;
+import com.android.mazhengyang.minichat.util.SharedPreferencesHelper;
+import com.android.mazhengyang.minichat.util.SoundController;
+import com.android.mazhengyang.minichat.util.VibrateController;
 import com.suke.widget.SwitchButton;
 
 import butterknife.BindView;
@@ -33,8 +35,12 @@ public class MeFragment extends Fragment {
     ImageView ivUserHead;
     @BindView(R.id.tv_user_nickname)
     TextView tvUserNickName;
+    @BindView(R.id.sound_switch_button)
+    SwitchButton soundSwitchBtn;
+    @BindView(R.id.vibrate_switch_button)
+    SwitchButton vibrateSwitchBtn;
     @BindView(R.id.daynight_switch_button)
-    SwitchButton switchButton;
+    SwitchButton daynightSwitchBtn;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,15 +60,59 @@ public class MeFragment extends Fragment {
         tvUserNickName.setText("");
         ivUserHead.setImageResource(R.drawable.user_friend);
 
-        if (ChangeModeHelper.getChangeMode(context) == ChangeModeHelper.MODE_NIGHT) {
-            switchButton.setChecked(true);
+        //sound
+        if (SharedPreferencesHelper.getSoundMode(context)
+                == SharedPreferencesHelper.MODE_SOUND_ON) {
+            soundSwitchBtn.setChecked(true);
+            SoundController.setEnable(true);
         } else {
-            switchButton.setChecked(false);
+            soundSwitchBtn.setChecked(false);
+            SoundController.setEnable(false);
         }
-        switchButton.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
+        soundSwitchBtn.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(SwitchButton view, boolean isChecked) {
-                ChangeModeController.toggleThemeSetting(getActivity());
+                if (isChecked) {
+                    SharedPreferencesHelper.setSoundMode(getActivity(), SharedPreferencesHelper.MODE_SOUND_ON);
+                } else {
+                    SharedPreferencesHelper.setSoundMode(getActivity(), SharedPreferencesHelper.MODE_SOUND_OFF);
+                }
+                SoundController.setEnable(isChecked);
+            }
+        });
+
+        //vibrate
+        if (SharedPreferencesHelper.getVibrateMode(context)
+                == SharedPreferencesHelper.MODE_VIBRATE_ON) {
+            vibrateSwitchBtn.setChecked(true);
+            VibrateController.setEnable(true);
+        } else {
+            vibrateSwitchBtn.setChecked(false);
+            VibrateController.setEnable(false);
+        }
+        vibrateSwitchBtn.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(SwitchButton view, boolean isChecked) {
+                if (isChecked) {
+                    SharedPreferencesHelper.setVibrateMode(getActivity(), SharedPreferencesHelper.MODE_VIBRATE_ON);
+                } else {
+                    SharedPreferencesHelper.setVibrateMode(getActivity(), SharedPreferencesHelper.MODE_VIBRATE_OFF);
+                }
+                VibrateController.setEnable(true);
+            }
+        });
+
+        //daynight
+        if (SharedPreferencesHelper.getDayNightMode(context)
+                == SharedPreferencesHelper.MODE_NIGHT) {
+            daynightSwitchBtn.setChecked(true);
+        } else {
+            daynightSwitchBtn.setChecked(false);
+        }
+        daynightSwitchBtn.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(SwitchButton view, boolean isChecked) {
+                DayNightController.toggleThemeSetting(getActivity());
             }
         });
 

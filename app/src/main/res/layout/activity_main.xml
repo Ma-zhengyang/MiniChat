@@ -21,7 +21,6 @@
         android:layout_height="?attr/actionBarSize"
         android:layout_centerVertical="true"
         android:background="@color/lightGray"
-        app:dayNightBackgroundAttr="dayNightBackground"
         app:tabGravity="fill"
         app:tabIndicatorColor="@color/transparent"
         app:tabMode="fixed"

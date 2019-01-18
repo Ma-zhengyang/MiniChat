@@ -1,4 +1,4 @@
-package com.android.mazhengyang.minichat.util.daynightmodeutils;
+package com.android.mazhengyang.minichat.util;
 
 /**
  * Created by mazhengyang on 18-12-25.
@@ -16,7 +16,6 @@ import android.os.Build;
 import android.support.v4.view.LayoutInflaterCompat;
 import android.support.v4.view.LayoutInflaterFactory;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +23,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.fragment.MeFragment;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -33,9 +31,9 @@ import java.util.List;
 /**
  * 夜间模式控制器
  */
-public class ChangeModeController {
+public class DayNightController {
 
-    private static final String TAG = "MiniChat." + ChangeModeController.class.getSimpleName();
+    private static final String TAG = "MiniChat." + DayNightController.class.getSimpleName();
 
     /**
      * 属性背景
@@ -64,14 +62,14 @@ public class ChangeModeController {
     private static List<AttrEntity<TextView>> mTwoTextColorViews;
     private static List<AttrEntity<TextView>> mThreeTextColorViews;
 
-    private static ChangeModeController mChangeModeController;
+    private static DayNightController mChangeModeController;
 
-    private ChangeModeController() {
+    private DayNightController() {
     }
 
-    public static ChangeModeController getInstance() {
+    public static DayNightController getInstance() {
         if (mChangeModeController == null) {
-            mChangeModeController = new ChangeModeController();
+            mChangeModeController = new DayNightController();
         }
         return mChangeModeController;
     }
@@ -93,7 +91,7 @@ public class ChangeModeController {
      * @param activity 上下文
      * @return
      */
-    public ChangeModeController init(final Activity activity, final Class mClass) {
+    public DayNightController init(final Activity activity, final Class mClass) {
         init();
         LayoutInflaterCompat.setFactory(LayoutInflater.from(activity), new LayoutInflaterFactory() {
             @Override
@@ -184,9 +182,9 @@ public class ChangeModeController {
      * @param Style_Night 夜间
      */
     public static void setTheme(Context ctx, int Style_Day, int Style_Night) {
-        if (ChangeModeHelper.getChangeMode(ctx) == ChangeModeHelper.MODE_DAY) {
+        if (SharedPreferencesHelper.getDayNightMode(ctx) == SharedPreferencesHelper.MODE_DAY) {
             ctx.setTheme(Style_Day);
-        } else if (ChangeModeHelper.getChangeMode(ctx) == ChangeModeHelper.MODE_NIGHT) {
+        } else if (SharedPreferencesHelper.getDayNightMode(ctx) == SharedPreferencesHelper.MODE_NIGHT) {
             ctx.setTheme(Style_Night);
         }
     }
@@ -196,9 +194,9 @@ public class ChangeModeController {
      * 动态切换主题
      */
     public static void toggleThemeSetting(Activity ctx) {
-        if (ChangeModeHelper.getChangeMode(ctx) == ChangeModeHelper.MODE_DAY) {
+        if (SharedPreferencesHelper.getDayNightMode(ctx) == SharedPreferencesHelper.MODE_DAY) {
             changeNight(ctx, R.style.NightTheme);
-        } else if (ChangeModeHelper.getChangeMode(ctx) == ChangeModeHelper.MODE_NIGHT) {
+        } else if (SharedPreferencesHelper.getDayNightMode(ctx) == SharedPreferencesHelper.MODE_NIGHT) {
             changeDay(ctx, R.style.DayTheme);
         }
     }
@@ -211,7 +209,7 @@ public class ChangeModeController {
         if (mBackGroundDrawableViews == null || mOneTextColorViews == null || mBackGroundViews == null) {
             throw new RuntimeException("请先调用init()初始化方法!");
         }
-        ChangeModeHelper.setChangeMode(ctx, ChangeModeHelper.MODE_NIGHT);
+        SharedPreferencesHelper.setDayNightMode(ctx, SharedPreferencesHelper.MODE_NIGHT);
         ctx.setTheme(style);
         showAnimation(ctx);
         refreshUI(ctx);
@@ -229,7 +227,7 @@ public class ChangeModeController {
                 || mBackGroundViews == null) {
             throw new RuntimeException("请先调用init()初始化方法!");
         }
-        ChangeModeHelper.setChangeMode(ctx, ChangeModeHelper.MODE_DAY);
+        SharedPreferencesHelper.setDayNightMode(ctx, SharedPreferencesHelper.MODE_DAY);
         ctx.setTheme(style);
         showAnimation(ctx);
         refreshUI(ctx);
@@ -382,7 +380,7 @@ public class ChangeModeController {
      * @param colorId
      * @return
      */
-    public ChangeModeController addBackgroundColor(View view, int colorId) {
+    public DayNightController addBackgroundColor(View view, int colorId) {
         mBackGroundViews.add(new AttrEntity(view, colorId));
         return this;
     }
@@ -394,7 +392,7 @@ public class ChangeModeController {
      * @param drawableId 属性id
      * @return
      */
-    public ChangeModeController addBackgroundDrawable(View view, int drawableId) {
+    public DayNightController addBackgroundDrawable(View view, int drawableId) {
         mBackGroundDrawableViews.add(new AttrEntity(view, drawableId));
         return this;
     }
@@ -406,7 +404,7 @@ public class ChangeModeController {
      * @param colorId 属性id
      * @return
      */
-    public ChangeModeController addTextColor(View view, int colorId) {
+    public DayNightController addTextColor(View view, int colorId) {
         mOneTextColorViews.add(new AttrEntity<TextView>((TextView) view, colorId));
         return this;
     }
@@ -418,7 +416,7 @@ public class ChangeModeController {
      * @param colorId 属性id
      * @return
      */
-    public ChangeModeController addTwoTextColor(View view, int colorId) {
+    public DayNightController addTwoTextColor(View view, int colorId) {
         mTwoTextColorViews.add(new AttrEntity<TextView>((TextView) view, colorId));
         return this;
     }
@@ -430,7 +428,7 @@ public class ChangeModeController {
      * @param colorId 属性id
      * @return
      */
-    public ChangeModeController addThreeTextColor(View view, int colorId) {
+    public DayNightController addThreeTextColor(View view, int colorId) {
         mThreeTextColorViews.add(new AttrEntity<TextView>((TextView) view, colorId));
         return this;
     }

@@ -12,7 +12,7 @@ import android.widget.TextView;
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.model.IUserListCallback;
-import com.android.mazhengyang.minichat.util.NetUtils;
+import com.android.mazhengyang.minichat.util.Utils;
 import com.android.mazhengyang.minichat.widget.BadgeView;
 
 import java.util.List;
@@ -36,6 +36,12 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void setUserListCallback(IUserListCallback userListCallback) {
         Log.d(TAG, "setUserListCallback: userListCallback=" + userListCallback);
         this.userListCallback = userListCallback;
+    }
+
+    public void updateChatedUserList(List<UserBean> chatedUserList) {
+        Log.d(TAG, "updateChatedUserList: userListCallback=" + userListCallback);
+        this.chatedUserList = chatedUserList;
+        notifyDataSetChanged();
     }
 
     public ChatHistoryAdapter(Context context, List<UserBean> chatedUserList) {
@@ -65,7 +71,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         String senderIp = userBean.getUserIp();
         Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
 
-        if (senderIp.equals(NetUtils.getLocalIpAddress())) {
+        if (senderIp.equals(Utils.getLocalIpAddress())) {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
         } else {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);

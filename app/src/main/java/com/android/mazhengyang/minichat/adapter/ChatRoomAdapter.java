@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.MessageBean;
-import com.android.mazhengyang.minichat.util.NetUtils;
+import com.android.mazhengyang.minichat.util.Utils;
 
 import java.util.List;
 
@@ -80,7 +80,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
         Log.d(TAG, "onBindViewHolder: receiverIp=" + receiverIp);
 
-        if (senderIp.equals(NetUtils.getLocalIpAddress())) {
+        if (senderIp.equals(Utils.getLocalIpAddress())) {
             ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
         } else {
             ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
@@ -103,7 +103,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         MessageBean messageBean = messageList.get(position);
 
-        if (messageBean.getSenderIp().equals(NetUtils.getLocalIpAddress())) {
+        if (messageBean.getSenderIp().equals(Utils.getLocalIpAddress())) {
             return TYPE_SELF;
         } else {
             return TYPE_FRIEND;

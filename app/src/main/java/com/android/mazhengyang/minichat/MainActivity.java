@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Vibrator;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -25,9 +26,11 @@ import com.android.mazhengyang.minichat.fragment.MeFragment;
 import com.android.mazhengyang.minichat.fragment.UserListFragment;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
 import com.android.mazhengyang.minichat.model.IUserListCallback;
-import com.android.mazhengyang.minichat.util.NetUtils;
-import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeController;
-import com.android.mazhengyang.minichat.util.daynightmodeutils.ChangeModeHelper;
+import com.android.mazhengyang.minichat.util.SoundController;
+import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.util.DayNightController;
+import com.android.mazhengyang.minichat.util.SharedPreferencesHelper;
+import com.android.mazhengyang.minichat.util.VibrateController;
 import com.android.mazhengyang.minichat.widget.BadgeView;
 
 import java.util.List;
@@ -73,18 +76,19 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
-        ChangeModeController.getInstance().init(this, R.attr.class);
+        DayNightController.getInstance().init(this, R.attr.class);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        NetUtils.resetLocalIpAddress();
+        Utils.resetLocalIpAddress();
 
         initView();
 
-        if (ChangeModeHelper.getChangeMode(this) == ChangeModeHelper.MODE_NIGHT) {
-            ChangeModeController.changeNight(this, R.style.NightTheme);
+        if (SharedPreferencesHelper.getDayNightMode(this)
+                == SharedPreferencesHelper.MODE_NIGHT) {
+            DayNightController.changeNight(this, R.style.NightTheme);
         }
 
         udpThread = UdpThread.getInstance();
@@ -106,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         Log.d(TAG, "onResume: ");
         super.onResume();
 
-        boolean isWifiConnected = NetUtils.isWifiConnected(this);
+        boolean isWifiConnected = Utils.isWifiConnected(this);
         Log.d(TAG, "onResume: isWifiConnected=" + isWifiConnected);
         udpThread.setOnline(isWifiConnected);
     }
@@ -122,10 +126,13 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         Log.d(TAG, "onDestroy: ");
         super.onDestroy();
 
+        VibrateController.stop();
+        SoundController.stop();
+
         udpThread.release();
         mainHandler.removeCallbacksAndMessages(null);
         unregisterReceiver(netWorkStateReceiver);
-        ChangeModeController.onDestory();
+        DayNightController.onDestory();
     }
 
     @Override
@@ -157,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             String action = intent.getAction();
             Log.d(TAG, "onReceive: " + action);
             if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-                boolean isWifiConnected = NetUtils.isWifiConnected(MainActivity.this);
+                boolean isWifiConnected = Utils.isWifiConnected(MainActivity.this);
                 Log.d(TAG, "onReceive: isWifiConnected=" + isWifiConnected);
 
                 if (!isWifiConnected) {
@@ -312,17 +319,19 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                     break;
                 case MESSAGE_FRESH_MESSAGE:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE");
-                    UserBean chattingUser = udpThread.getChattingUser();
-                    if (chattingUser != null) {
-                        List<MessageBean> list = messageListMap.get(chattingUser.getUserIp());
-                        chatRoomFragment.freshMessageList(list);
+                    if (currentFragment == chatRoomFragment) {
+                        UserBean chattingUser = udpThread.getChattingUser();
+                        if (chattingUser != null) {
+                            List<MessageBean> list = messageListMap.get(chattingUser.getUserIp());
+                            chatRoomFragment.freshMessageList(list);
+                        }
                     }
                     break;
                 case MESSAGE_FRESH_CHAT_HISTORY:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_CHAT_HISTORY");
                     updateUnReadIndicator();
                     if (chatHistoryFragment != null) {
-                        chatHistoryFragment.updateChatedUserList();
+                        chatHistoryFragment.updateChatedUserList(chattedUserList);
                     }
                     break;
                 default:
@@ -350,10 +359,12 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     @Override
     public void freshMessage(Map<String, List<MessageBean>> listMap) {
         //在UdpThread回调，必须放到主线程更新UI
+
+        VibrateController.vibrate(this);
+        SoundController.play();
+
         this.messageListMap = listMap;
-        if (currentFragment == chatRoomFragment) {
-            mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);
-        }
+        mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);
     }
 
     /**
@@ -384,7 +395,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         showFragment(chatRoomFragment);
         udpThread.setChattingUser(user);
 
-        if (!user.getUserIp().equals(NetUtils.getLocalIpAddress())) {
+        if (!user.getUserIp().equals(Utils.getLocalIpAddress())) {
             user.setUnReadMsgCount(0);
             updateUnReadIndicator();
         }

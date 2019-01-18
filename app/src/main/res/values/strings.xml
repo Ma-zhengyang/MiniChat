@@ -1,15 +1,17 @@
 <resources>
 
     <string name="app_name">微聊</string>
+    <string name="tab_chat_history">聊天</string>
+    <string name="tab_userlist">通讯录</string>
+    <string name="tab_self">我</string>
     <string name="wifi_unconnected">wifi未连接</string>
     <string name="send_msg">发送</string>
     <string name="user_head">头像</string>
     <string name="user_nickname">名字</string>
     <string name="user_default_nickname">我</string>
     <string name="daynight_mode_change">夜间模式</string>
-    <string name="tab_chat_history">聊天</string>
-    <string name="tab_userlist">通讯录</string>
-    <string name="tab_self">我</string>
+    <string name="setting_sound">声音</string>
+    <string name="setting_vibrate">震动</string>
 
     <string name="wanshan">完善中...</string>
 

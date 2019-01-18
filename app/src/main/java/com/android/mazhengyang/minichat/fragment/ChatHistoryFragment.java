@@ -49,10 +49,10 @@ public class ChatHistoryFragment extends Fragment {
         this.chatedUserList = chatedUserList;
     }
 
-    public void updateChatedUserList() {
+    public void updateChatedUserList(List<UserBean> chatedUserList) {
         Log.d(TAG, "updateChatedUserList: ");
         if (chatHistoryAdapter != null) {
-            chatHistoryAdapter.notifyDataSetChanged();
+            chatHistoryAdapter.updateChatedUserList(chatedUserList);
         }
     }
 

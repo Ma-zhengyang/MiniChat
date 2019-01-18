@@ -7,7 +7,6 @@ import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
 import com.android.mazhengyang.minichat.util.Constant;
-import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.util.Utils;
 
 import org.json.JSONException;
@@ -113,7 +112,7 @@ public class UdpThread extends Thread {
      */
 
     public void startWork() {
-        Log.d(TAG, "start: ");
+        Log.d(TAG, "startWork: ");
         try {
             executorService = Executors.newFixedThreadPool(10);
             multicastSocket = new MulticastSocket(port);
@@ -123,7 +122,7 @@ public class UdpThread extends Thread {
             start();
         } catch (IOException e) {
             e.printStackTrace();
-            Log.e(TAG, "UdpThread: " + e);
+            Log.e(TAG, "startWork: " + e);
         }
     }
 
@@ -146,7 +145,7 @@ public class UdpThread extends Thread {
 
                     //如果是wifi信号等原因中途断网的，是无法send的，只能把自己设置下线
                     for (UserBean user : userList) {
-                        if (user.getUserIp().equals(NetUtils.getLocalIpAddress()) && user.isOnline()) {
+                        if (user.getUserIp().equals(Utils.getLocalIpAddress()) && user.isOnline()) {
                             user.setOnline(false);
                             freshUserList(userList);
                             break;
@@ -186,7 +185,7 @@ public class UdpThread extends Thread {
 
     public void send(MessageBean messageBean) {
 
-        String selfIp = NetUtils.getLocalIpAddress();
+        String selfIp = Utils.getLocalIpAddress();
         String receiverIp = messageBean.getReceiverIp();
 
         //自己给自己发消息，处理一次就行
@@ -248,7 +247,7 @@ public class UdpThread extends Thread {
     public MessageBean packUdpMessage(String receiverIp, String message, int type) {
         MessageBean messageBean = new MessageBean();
         messageBean.setSenderName(Build.DEVICE);
-        messageBean.setSenderIp(NetUtils.getLocalIpAddress());
+        messageBean.setSenderIp(Utils.getLocalIpAddress());
         messageBean.setReceiverIp(receiverIp);
         messageBean.setDeviceCode(Build.DEVICE);
         messageBean.setMsg(message);
@@ -272,7 +271,7 @@ public class UdpThread extends Thread {
             String s = new String(data, 0, datagramPacket.getLength(), Constant.ENCOD);
             MessageBean messageBean = new MessageBean(new JSONObject(s));
 
-            String selfIp = NetUtils.getLocalIpAddress();
+            String selfIp = Utils.getLocalIpAddress();
             String senderIp = datagramPacket.getAddress().getHostAddress();//对方ip。自己给自己发的话这个ip就是自己
 
             Log.d(TAG, "handleReceivedMsg: selfIp=" + selfIp);
@@ -377,7 +376,7 @@ public class UdpThread extends Thread {
 
         String senderIp = messageBean.getSenderIp();
         String receiverIp = messageBean.getReceiverIp();
-        String selfIp = NetUtils.getLocalIpAddress();
+        String selfIp = Utils.getLocalIpAddress();
 
         UserBean whoSend = null;//这条消息是谁发来的
         UserBean whoReceiver = null;//这条消息是谁接收的

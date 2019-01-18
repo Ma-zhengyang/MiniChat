@@ -1,132 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <android.support.v7.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="15dp"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="15dp"
+        app:cardCornerRadius="10dp">
 
-        <RelativeLayout
-            android:id="@+id/head_layout"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:background="@drawable/setting_selector"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:text="@string/user_head"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
+            <include layout="@layout/item_setting_head" />
 
+            <include layout="@layout/item_setting_divider" />
 
-            <ImageView
-                android:id="@+id/head_right_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                android:src="@drawable/ic_chevron_right_black_24dp" />
+            <include layout="@layout/item_setting_name" />
 
+        </LinearLayout>
 
-            <ImageView
-                android:id="@+id/iv_user_head"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_centerVertical="true"
-                android:layout_marginRight="10dp"
-                android:layout_toLeftOf="@id/head_right_icon" />
+    </android.support.v7.widget.CardView>
 
-        </RelativeLayout>
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="15dp"
+        app:cardCornerRadius="10dp">
 
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@color/deepGray" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-        <RelativeLayout
-            android:id="@+id/nickname_layout"
-            android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:background="@drawable/setting_selector"
-            android:orientation="horizontal">
+            <include layout="@layout/item_setting_sound" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:text="@string/user_nickname"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
+            <include layout="@layout/item_setting_divider" />
 
-            <TextView
-                android:id="@+id/tv_user_nickname"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginRight="10dp"
-                android:layout_toLeftOf="@id/nickname_right_icon"
-                android:textSize="16sp" />
+            <include layout="@layout/item_setting_vibrate" />
 
-            <ImageView
-                android:id="@+id/nickname_right_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                android:src="@drawable/ic_chevron_right_black_24dp" />
+            <include layout="@layout/item_setting_divider" />
 
-        </RelativeLayout>
+            <include layout="@layout/item_setting_daynight" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@color/deepGray" />
+        </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:text="@string/daynight_mode_change"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <com.suke.widget.SwitchButton
-                android:id="@+id/daynight_switch_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                android:textSize="16sp" />
-
-        </RelativeLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@color/deepGray" />
-    </LinearLayout>
+    </android.support.v7.widget.CardView>
 
 
-</FrameLayout>
+</LinearLayout>

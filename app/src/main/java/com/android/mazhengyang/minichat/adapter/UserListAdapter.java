@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.util.NetUtils;
+import com.android.mazhengyang.minichat.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +66,15 @@ public class UserListAdapter extends BaseAdapter implements
 
             mSectionIndices = getSectionIndices();
             mSectionLetters = getSectionLetters();
+
+            Log.d(TAG, "formatList: mSectionIndices=" + mSectionIndices.length);
+            for (int i = 0; i < mSectionIndices.length; i++) {
+                Log.d(TAG, "formatList: mSectionIndices[" + i + "]=" + mSectionIndices[i]);
+            }
+            Log.d(TAG, "formatList: mSectionLetters=" + mSectionLetters.length);
+            for (int i = 0; i < mSectionLetters.length; i++) {
+                Log.d(TAG, "formatList: mSectionLetters[" + i + "]=" + mSectionLetters[i]);
+            }
         }
     }
 
@@ -156,7 +165,7 @@ public class UserListAdapter extends BaseAdapter implements
                 holder.tvUserName.setTextColor(Color.GRAY);
             }
 
-            if (ip.equals(NetUtils.getLocalIpAddress())) {
+            if (ip.equals(Utils.getLocalIpAddress())) {
                 holder.ivUserIcon.setImageResource(R.drawable.user_self);
                 holder.tvUserName.setText(name);
             } else {
@@ -189,8 +198,11 @@ public class UserListAdapter extends BaseAdapter implements
         }
 
         // set header text as first char in name
-        CharSequence headerChar = mNameList.get(position).subSequence(0, 1);
-        holder.headerText.setText(headerChar);
+        String s = mNameList.get(mSectionIndices[position]).toUpperCase();
+        if (s.length() > 1) {
+            CharSequence headerChar = s.subSequence(0, 1);
+            holder.headerText.setText(headerChar);
+        }
 
         return convertView;
     }

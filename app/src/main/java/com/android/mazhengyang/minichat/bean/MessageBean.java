@@ -27,15 +27,19 @@ public class MessageBean {
         Log.d(TAG, "MessageBean: ");
     }
 
-    public MessageBean(JSONObject object) throws JSONException {
-        senderName = new String(Base64.decode(object.getString("senderName").getBytes(), Base64.DEFAULT));
-        senderIp = object.getString("senderIp");
-        receiverIp = object.getString("receiverIp");
-        deviceCode = object.getString("deviceCode");
-        msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
-        type = object.getInt("type");
-        sendTime = object.getString("sendTime");
-        readed = object.getBoolean("readed");
+    public MessageBean(JSONObject object) {
+        try {
+            senderName = new String(Base64.decode(object.getString("senderName").getBytes(), Base64.DEFAULT));
+            senderIp = object.getString("senderIp");
+            receiverIp = object.getString("receiverIp");
+            deviceCode = object.getString("deviceCode");
+            msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
+            type = object.getInt("type");
+            sendTime = object.getString("sendTime");
+            readed = object.getBoolean("readed");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -97,6 +101,7 @@ public class MessageBean {
 
     public void setSendTime(String sendTime) {
         this.sendTime = sendTime;
+        Log.d(TAG, "setSendTime: sendTime=" + sendTime);
     }
 
     public String getDeviceCode() {
