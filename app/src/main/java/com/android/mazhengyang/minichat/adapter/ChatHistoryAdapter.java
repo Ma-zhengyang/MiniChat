@@ -8,12 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.model.IUserListCallback;
 import com.android.mazhengyang.minichat.util.Utils;
 import com.android.mazhengyang.minichat.widget.BadgeView;
+import com.daimajia.swipe.SwipeLayout;
 
 import java.util.List;
 
@@ -97,6 +99,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public class ChatedUserItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
+        @BindView(R.id.swipelayout)
+        SwipeLayout swipeLayout;
         @BindView(R.id.ivUserIcon)
         ImageView ivUserIcon;
         @BindView(R.id.bvUnReadMsgCount)
@@ -108,10 +112,22 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         @BindView(R.id.tvRecentTime)
         TextView tvRecentTime;
 
+        @BindView(R.id.delete)
+        ImageView deleteBtn;
+
         public ChatedUserItemViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
             itemView.setOnClickListener(this);
+
+            swipeLayout.setShowMode(SwipeLayout.ShowMode.LayDown);
+            swipeLayout.addDrag(SwipeLayout.DragEdge.Right, swipeLayout.findViewWithTag("controlView"));
+            deleteBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(context, "delete click", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         @Override

@@ -1,1 +1,1 @@
-include ':app', ':StickyListHeaders'
+include ':app', ':StickyListHeaders', ':swipelayout'

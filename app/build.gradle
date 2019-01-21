@@ -48,4 +48,8 @@ dependencies {
     compile 'com.github.zcweng:switch-button:0.0.3@aar'
     //StickyListHeaders
     compile project(':StickyListHeaders')
+    //cardview
+    compile 'com.android.support:cardview-v7:26.1.0'
+    //SwipeLayout
+    compile project(':swipelayout')
 }

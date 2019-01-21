@@ -6,6 +6,7 @@
 
     <color name="transparent">#00000000</color>
     <color name="red">#FFFF0000</color>
+    <color name="red_press">#FF990000</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
