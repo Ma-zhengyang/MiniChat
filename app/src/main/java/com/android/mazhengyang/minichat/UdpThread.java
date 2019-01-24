@@ -50,8 +50,8 @@ public class UdpThread extends Thread {
     private final static int DEFAULT_BUFFERSIZE = 1024 * 2;
     private byte[] bufferData;
 
-    //用户列表
-    private List<UserBean> userList = new ArrayList<>();
+    //联系人列表
+    private List<UserBean> contactList = new ArrayList<>();
     //聊过天的用户列表
     private List<UserBean> chatedUserList = new ArrayList<>();
     //保存消息  String对方ip地址, List<MessageBean>聊天内容
@@ -144,10 +144,10 @@ public class UdpThread extends Thread {
                 } else {
 
                     //如果是wifi信号等原因中途断网的，是无法send的，只能把自己设置下线
-                    for (UserBean user : userList) {
+                    for (UserBean user : contactList) {
                         if (user.getUserIp().equals(Utils.getLocalIpAddress()) && user.isOnline()) {
                             user.setOnline(false);
-                            freshUserList(userList);
+                            freshUserList(contactList);
                             break;
                         }
                     }
@@ -158,7 +158,7 @@ public class UdpThread extends Thread {
                 }
             } catch (UnknownHostException e) {
                 e.printStackTrace();
-                Log.e(TAG, "startRun: " + e);
+                Log.e(TAG, "setOnline: " + e);
             }
         }
 
@@ -245,6 +245,7 @@ public class UdpThread extends Thread {
      * @return
      */
     public MessageBean packUdpMessage(String receiverIp, String message, int type) {
+        Log.d(TAG, "packUdpMessage: ");
         MessageBean messageBean = new MessageBean();
         messageBean.setSenderName(Build.DEVICE);
         messageBean.setSenderIp(Utils.getLocalIpAddress());
@@ -282,7 +283,7 @@ public class UdpThread extends Thread {
                     Log.d(TAG, "handleReceivedMsg: ACTION_ONLINE");
                     boolean isExist = false;
                     //user已经存在，直接更新在线状态
-                    for (UserBean user : userList) {
+                    for (UserBean user : contactList) {
                         if (user.getUserIp().equals(senderIp)) {
                             Log.d(TAG, "handleReceivedMsg: " + senderIp + " has existed.");
                             if (!user.isOnline()) {
@@ -302,7 +303,7 @@ public class UdpThread extends Thread {
                         newUser.setDeviceCode(messageBean.getDeviceCode());
                         newUser.setOnline(true);
                         newUser.setSelf(selfIp.equals(senderIp));
-                        userList.add(newUser);
+                        contactList.add(newUser);
                     }
 
                     //自己上线后，对方接收到ACTION_ONLINE后执行这里，这样就会把对方加入到自己列表
@@ -311,14 +312,14 @@ public class UdpThread extends Thread {
                                 datagramPacket.getAddress());
                     }
 
-                    freshUserList(userList);
+                    freshUserList(contactList);
                     break;
                 case ACTION_OFFLINE:
                     Log.d(TAG, "handleReceivedMsg: ACTION_OFFLINE");
-                    for (UserBean user : userList) {
+                    for (UserBean user : contactList) {
                         if (user.getUserIp().equals(senderIp) && user.isOnline()) {
                             user.setOnline(false);
-                            freshUserList(userList);
+                            freshUserList(contactList);
                             break;
                         }
                     }
@@ -331,9 +332,9 @@ public class UdpThread extends Thread {
                     user.setUserName(messageBean.getSenderName());
                     user.setDeviceCode(messageBean.getDeviceCode());
                     user.setOnline(true);
-                    userList.add(user);
+                    contactList.add(user);
 
-                    freshUserList(userList);
+                    freshUserList(contactList);
                     break;
                 case MESSAGE_TO_TARGET://接收对方发过来的消息
                     Log.d(TAG, "handleReceivedMsg: MESSAGE_TO_TARGET");
@@ -356,12 +357,12 @@ public class UdpThread extends Thread {
     /**
      * 刷新用户列表
      *
-     * @param userList
+     * @param contactList
      */
-    private void freshUserList(List<UserBean> userList) {
+    private void freshUserList(List<UserBean> contactList) {
         Log.d(TAG, "freshUserList: start");
         if (listener != null) {
-            listener.freshUserList(userList);
+            listener.freshUserList(contactList);
         }
         Log.d(TAG, "freshUserList: end");
     }
@@ -380,7 +381,7 @@ public class UdpThread extends Thread {
 
         UserBean whoSend = null;//这条消息是谁发来的
         UserBean whoReceiver = null;//这条消息是谁接收的
-        for (UserBean userBean : userList) {
+        for (UserBean userBean : contactList) {
             if (whoSend == null) {
                 if (userBean.getUserIp().equals(senderIp)) {
                     whoSend = userBean;
@@ -414,11 +415,6 @@ public class UdpThread extends Thread {
             messageList.put(key, list);
         }
 
-        if (listener != null) {
-            listener.freshMessage(messageList);
-        }
-
-
         if (chattingUser != null) {//正在聊天界面
             Log.d(TAG, "freshMessage: current is in chatRoomFragment");
 
@@ -427,10 +423,16 @@ public class UdpThread extends Thread {
                 if (senderIp.equals(receiverIp)) {//自己和自己发消息，无需设置未读
                     Log.d(TAG, "freshMessage: message send by self");
                     messageBean.setReaded(true);
+                    if (listener != null) {
+                        listener.freshMessage(messageList, false, false);
+                    }
                 } else {//别人消息进来
                     Log.d(TAG, "freshMessage: message send by other");
                     int unReadMsgCount = whoSend.getUnReadMsgCount();
                     whoSend.setUnReadMsgCount(++unReadMsgCount);
+                    if (listener != null) {
+                        listener.freshMessage(messageList, true, false);
+                    }
                 }
                 if (!chatedUserList.contains(whoSend)) {
                     chatedUserList.add(whoSend);
@@ -445,12 +447,18 @@ public class UdpThread extends Thread {
                     if (!chatedUserList.contains(whoSend)) {
                         chatedUserList.add(whoSend);
                     }
+                    if (listener != null) {
+                        listener.freshMessage(messageList, true, false);
+                    }
                     whoSend.setRecentMsg(messageBean.getMsg());
                     whoSend.setRecentTime(messageBean.getSendTime());
                 } else if (ip.equals(receiverIp)) {//自己发消息时
                     messageBean.setReaded(true);
                     if (!chatedUserList.contains(whoReceiver)) {
                         chatedUserList.add(whoReceiver);
+                    }
+                    if (listener != null) {
+                        listener.freshMessage(messageList, false, false);
                     }
                     whoReceiver.setRecentMsg(messageBean.getMsg());
                     whoReceiver.setRecentTime(messageBean.getSendTime());
@@ -461,6 +469,9 @@ public class UdpThread extends Thread {
                         whoSend.setUnReadMsgCount(++unReadMsgCount);
                         if (!chatedUserList.contains(whoSend)) {
                             chatedUserList.add(whoSend);
+                        }
+                        if (listener != null) {
+                            listener.freshMessage(messageList, true, false);
                         }
                         whoSend.setRecentMsg(messageBean.getMsg());
                         whoSend.setRecentTime(messageBean.getSendTime());
@@ -476,6 +487,9 @@ public class UdpThread extends Thread {
                 whoSend.setUnReadMsgCount(++unReadMsgCount);
                 if (!chatedUserList.contains(whoSend)) {
                     chatedUserList.add(whoSend);
+                }
+                if (listener != null) {
+                    listener.freshMessage(messageList, true, true);
                 }
                 whoSend.setRecentMsg(messageBean.getMsg());
                 whoSend.setRecentTime(messageBean.getSendTime());

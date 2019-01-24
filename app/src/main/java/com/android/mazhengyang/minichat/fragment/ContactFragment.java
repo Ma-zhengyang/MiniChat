@@ -11,11 +11,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.TextView;
 
-import com.android.mazhengyang.minichat.MainActivity;
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.adapter.UserListAdapter;
+import com.android.mazhengyang.minichat.adapter.ContactAdapter;
 import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.model.IUserListCallback;
+import com.android.mazhengyang.minichat.model.IContactCallback;
 
 import java.util.List;
 
@@ -27,24 +26,24 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  * Created by mazhengyang on 18-12-6.
  */
 
-public class UserListFragment extends Fragment implements
+public class ContactFragment extends Fragment implements
         AdapterView.OnItemClickListener, StickyListHeadersListView.OnHeaderClickListener,
         StickyListHeadersListView.OnStickyHeaderOffsetChangedListener,
         StickyListHeadersListView.OnStickyHeaderChangedListener {
 
-    private static final String TAG = "MiniChat." + UserListFragment.class.getSimpleName();
+    private static final String TAG = "MiniChat." + ContactFragment.class.getSimpleName();
 
-    private IUserListCallback userListCallback;
+    private IContactCallback userListCallback;
 
-    private List<UserBean> userList;
-    private UserListAdapter userListAdapter;
+    private List<UserBean> contactList;
+    private ContactAdapter userListAdapter;
 
     @BindView(R.id.tv_head)
     TextView tvHead;
     @BindView(R.id.stickyListHeadersListView)
     StickyListHeadersListView stickyListHeadersListView;
 
-    public void setUserListCallback(IUserListCallback userListCallback) {
+    public void setUserListCallback(IContactCallback userListCallback) {
         this.userListCallback = userListCallback;
     }
 
@@ -58,14 +57,14 @@ public class UserListFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: ");
-        View view = inflater.inflate(R.layout.fragment_userlist, null);
+        View view = inflater.inflate(R.layout.fragment_contact, null);
         ButterKnife.bind(this, view);
 
         tvHead.setText(R.string.tab_userlist);
 
         Context context = getContext();
 
-        userListAdapter = new UserListAdapter(context, userList);
+        userListAdapter = new ContactAdapter(context, contactList);
 
         stickyListHeadersListView.setOnItemClickListener(this);
         stickyListHeadersListView.setOnHeaderClickListener(this);
@@ -100,7 +99,7 @@ public class UserListFragment extends Fragment implements
     }
 
     public void freshUserList(List<UserBean> list) {
-        this.userList = list;
+        this.contactList = list;
         userListAdapter.freshUserList(list);
     }
 
@@ -123,7 +122,7 @@ public class UserListFragment extends Fragment implements
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Log.d(TAG, "onItemClick: position=" + position);
         if (userListCallback != null) {
-            userListCallback.onUserItemClick(userList.get(position));
+            userListCallback.onUserItemClick(contactList.get(position));
         }
     }
 }

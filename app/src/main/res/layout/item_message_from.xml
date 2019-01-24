@@ -15,26 +15,29 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp">
+        android:layout_marginRight="50dp">
 
         <ImageView
             android:id="@+id/ivUserIcon"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true" />
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="5dp" />
 
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_marginRight="5dp"
-            android:layout_toLeftOf="@+id/ivUserIcon"
-            android:background="@drawable/chat_self_bg"
+            android:layout_marginLeft="5dp"
+            android:layout_toRightOf="@+id/ivUserIcon"
+            android:background="@drawable/chatfrom_bg"
+            android:clickable="true"
             android:textColor="@color/black"
             android:textSize="16sp" />
 
     </RelativeLayout>
+
 
 </LinearLayout>

@@ -16,7 +16,7 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.ChatHistoryAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.model.IUserListCallback;
+import com.android.mazhengyang.minichat.model.IContactCallback;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class ChatHistoryFragment extends Fragment {
 
     private ChatHistoryAdapter chatHistoryAdapter;
 
-    private IUserListCallback userListCallback;
+    private IContactCallback userListCallback;
 
     @BindView(R.id.tv_head)
     TextView tvHead;
@@ -56,7 +56,7 @@ public class ChatHistoryFragment extends Fragment {
         }
     }
 
-    public void setUserListCallback(IUserListCallback userListCallback) {
+    public void setUserListCallback(IContactCallback userListCallback) {
         Log.d(TAG, "setUserListCallback: ");
         this.userListCallback = userListCallback;
     }

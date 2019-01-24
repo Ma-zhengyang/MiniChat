@@ -6,9 +6,9 @@ import com.android.mazhengyang.minichat.bean.UserBean;
  * Created by mazhengyang on 19-1-10.
  */
 
-public interface IUserListCallback {
+public interface IContactCallback {
 
-    //UserListFragment, ChatHistoryFragment中調用，MainActivity中实现
+    //ContactFragment, ChatHistoryFragment中調用，MainActivity中实现
 
     void onUserItemClick(UserBean user);
 

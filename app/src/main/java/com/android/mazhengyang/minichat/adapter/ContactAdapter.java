@@ -24,10 +24,10 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
  * Created by mazhengyang on 18-11-27.
  */
 
-public class UserListAdapter extends BaseAdapter implements
+public class ContactAdapter extends BaseAdapter implements
         StickyListHeadersAdapter, SectionIndexer {
 
-    private static final String TAG = "MiniChat." + UserListAdapter.class.getSimpleName();
+    private static final String TAG = "MiniChat." + ContactAdapter.class.getSimpleName();
 
     private List<UserBean> list;
 
@@ -36,8 +36,8 @@ public class UserListAdapter extends BaseAdapter implements
     private Character[] mSectionLetters;
     private LayoutInflater mInflater;
 
-    public UserListAdapter(Context context, List<UserBean> list) {
-        Log.d(TAG, "UserListAdapter: ");
+    public ContactAdapter(Context context, List<UserBean> list) {
+        Log.d(TAG, "ContactAdapter: ");
 
         mInflater = LayoutInflater.from(context);
 
@@ -140,7 +140,7 @@ public class UserListAdapter extends BaseAdapter implements
 
         if (convertView == null) {
             holder = new ViewHolder();
-            convertView = mInflater.inflate(R.layout.item_userlist, parent, false);
+            convertView = mInflater.inflate(R.layout.item_contact, parent, false);
             holder.ivUserIcon = convertView.findViewById(R.id.ivUserIcon);
             holder.tvUserName = convertView.findViewById(R.id.tvUserName);
             holder.tvUserIp = convertView.findViewById(R.id.tvUserIp);

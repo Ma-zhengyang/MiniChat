@@ -27,9 +27,9 @@ import butterknife.OnClick;
  * Created by mazhengyang on 18-12-25.
  */
 
-public class MeFragment extends Fragment {
+public class SettingFragment extends Fragment {
 
-    private static final String TAG = "MiniChat." + MeFragment.class.getSimpleName();
+    private static final String TAG = "MiniChat." + SettingFragment.class.getSimpleName();
 
     @BindView(R.id.iv_user_head)
     ImageView ivUserHead;
@@ -52,7 +52,7 @@ public class MeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: ");
-        View view = inflater.inflate(R.layout.fragment_me, null);
+        View view = inflater.inflate(R.layout.fragment_setting, null);
         ButterKnife.bind(this, view);
 
         Context context = getContext();
@@ -98,7 +98,7 @@ public class MeFragment extends Fragment {
                 } else {
                     SharedPreferencesHelper.setVibrateMode(getActivity(), SharedPreferencesHelper.MODE_VIBRATE_OFF);
                 }
-                VibrateController.setEnable(true);
+                VibrateController.setEnable(isChecked);
             }
         });
 

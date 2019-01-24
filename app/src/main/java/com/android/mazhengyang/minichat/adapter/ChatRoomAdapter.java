@@ -51,12 +51,12 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         if (viewType == TYPE_SELF) {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_message_send, parent, false);
+                    .inflate(R.layout.item_message_to, parent, false);
             UserItemViewHolder vh = new UserItemViewHolder(v);
             return vh;
         } else {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_message_receive, parent, false);
+                    .inflate(R.layout.item_message_from, parent, false);
             UserItemViewHolder vh = new UserItemViewHolder(v);
             return vh;
         }

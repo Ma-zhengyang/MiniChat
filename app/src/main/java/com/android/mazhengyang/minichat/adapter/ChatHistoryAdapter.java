@@ -12,7 +12,7 @@ import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.model.IUserListCallback;
+import com.android.mazhengyang.minichat.model.IContactCallback;
 import com.android.mazhengyang.minichat.util.Utils;
 import com.android.mazhengyang.minichat.widget.BadgeView;
 import com.daimajia.swipe.SwipeLayout;
@@ -33,9 +33,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private Context context;
     private List<UserBean> chatedUserList;
 
-    private IUserListCallback userListCallback;
+    private IContactCallback userListCallback;
 
-    public void setUserListCallback(IUserListCallback userListCallback) {
+    public void setUserListCallback(IContactCallback userListCallback) {
         Log.d(TAG, "setUserListCallback: userListCallback=" + userListCallback);
         this.userListCallback = userListCallback;
     }

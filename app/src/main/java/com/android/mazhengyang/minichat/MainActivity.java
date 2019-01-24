@@ -8,13 +8,13 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Vibrator;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,10 +22,10 @@ import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.UserBean;
 import com.android.mazhengyang.minichat.fragment.ChatHistoryFragment;
 import com.android.mazhengyang.minichat.fragment.ChatRoomFragment;
-import com.android.mazhengyang.minichat.fragment.MeFragment;
-import com.android.mazhengyang.minichat.fragment.UserListFragment;
+import com.android.mazhengyang.minichat.fragment.ContactFragment;
+import com.android.mazhengyang.minichat.fragment.SettingFragment;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
-import com.android.mazhengyang.minichat.model.IUserListCallback;
+import com.android.mazhengyang.minichat.model.IContactCallback;
 import com.android.mazhengyang.minichat.util.SoundController;
 import com.android.mazhengyang.minichat.util.Utils;
 import com.android.mazhengyang.minichat.util.DayNightController;
@@ -39,7 +39,7 @@ import java.util.Map;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements ISocketCallback, IUserListCallback {
+public class MainActivity extends AppCompatActivity implements ISocketCallback, IContactCallback {
 
     private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
 
@@ -63,13 +63,13 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private UdpThread udpThread;
 
     private ChatHistoryFragment chatHistoryFragment;
-    private UserListFragment userListFragment;
-    private MeFragment meFragment;
+    private ContactFragment userListFragment;
+    private SettingFragment settingFragment;
     private ChatRoomFragment chatRoomFragment;
     private Fragment currentFragment;
 
     //在UdpThread中实现
-    private List<UserBean> userList;
+    private List<UserBean> contactList;
     private List<UserBean> chattedUserList;
     private Map<String, List<MessageBean>> messageListMap;
 
@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         Utils.resetLocalIpAddress();
 
         initView();
+        initVibrateSound();
 
         if (SharedPreferencesHelper.getDayNightMode(this)
                 == SharedPreferencesHelper.MODE_NIGHT) {
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(netWorkStateReceiver, intentFilter);
 
-        userListFragment = new UserListFragment();
+        userListFragment = new ContactFragment();
         userListFragment.setUserListCallback(this);
         showFragment(userListFragment);
     }
@@ -126,9 +127,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         Log.d(TAG, "onDestroy: ");
         super.onDestroy();
 
-        VibrateController.stop();
-        SoundController.stop();
-
         udpThread.release();
         mainHandler.removeCallbacksAndMessages(null);
         unregisterReceiver(netWorkStateReceiver);
@@ -147,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                     showFragment(userListFragment);
                     break;
                 case INDEX_ME:
-                    showFragment(meFragment);
+                    showFragment(settingFragment);
                     break;
             }
             return;
@@ -177,11 +175,12 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     }
 
     /**
+     * @param iconRes
      * @param titleRes
      * @param withBadgeView
      * @return
      */
-    private View makeTabView(int titleRes, boolean withBadgeView) {
+    private View makeTabView(int iconRes, int titleRes, boolean withBadgeView) {
         View tabView;
         if (withBadgeView) {
             tabView = LayoutInflater.from(this).inflate(R.layout.tab_item_with_badgeview, null);
@@ -189,6 +188,8 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         } else {
             tabView = LayoutInflater.from(this).inflate(R.layout.tab_item, null);
         }
+        ImageView icon = tabView.findViewById(R.id.iv_icon);
+        icon.setImageResource(iconRes);
         TextView title = tabView.findViewById(R.id.tv_title);
         title.setText(titleRes);
 
@@ -201,16 +202,16 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private void initView() {
 
         TabLayout.Tab chatHistoryTab = tabLayout.newTab();
-        View tabView = makeTabView(R.string.tab_chat_history, true);
+        View tabView = makeTabView(R.drawable.tab_chat_bg, R.string.tab_chat_history, true);
         chatHistoryTab.setCustomView(tabView);
         tabLayout.addTab(chatHistoryTab, INDEX_CHAT_HISTORY);
 
         TabLayout.Tab userListTab = tabLayout.newTab();
-        userListTab.setCustomView(makeTabView(R.string.tab_userlist, false));
+        userListTab.setCustomView(makeTabView(R.drawable.tab_contact_list, R.string.tab_userlist, false));
         tabLayout.addTab(userListTab, INDEX_USERLIST);
 
         TabLayout.Tab selfTab = tabLayout.newTab();
-        selfTab.setCustomView(makeTabView(R.string.tab_self, false));
+        selfTab.setCustomView(makeTabView(R.drawable.tab_profile, R.string.tab_self, false));
         tabLayout.addTab(selfTab, INDEX_ME);
 
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -219,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
                 View v = tab.getCustomView();
                 TextView title = v.findViewById(R.id.tv_title);
-                title.setTextColor(getColor(R.color.black));
+                title.setTextColor(getColor(R.color.green));
 
                 int position = tab.getPosition();
                 Log.d(TAG, "onTabSelected: position=" + position);
@@ -237,10 +238,10 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                         showFragment(userListFragment);
                         break;
                     case INDEX_ME:
-                        if (meFragment == null) {
-                            meFragment = new MeFragment();
+                        if (settingFragment == null) {
+                            settingFragment = new SettingFragment();
                         }
-                        showFragment(meFragment);
+                        showFragment(settingFragment);
                         break;
                 }
             }
@@ -288,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             } else if (fragment == userListFragment) {
                 tabLayout.getTabAt(INDEX_USERLIST).select();
                 indexCurrent = INDEX_USERLIST;
-            } else if (fragment == meFragment) {
+            } else if (fragment == settingFragment) {
                 tabLayout.getTabAt(INDEX_ME).select();
                 indexCurrent = INDEX_ME;
             }
@@ -303,6 +304,22 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         }
     }
 
+    private void initVibrateSound() {
+
+        if (SharedPreferencesHelper.getVibrateMode(this)
+                == SharedPreferencesHelper.MODE_VIBRATE_ON) {
+            VibrateController.setEnable(true);
+        } else {
+            VibrateController.setEnable(false);
+        }
+        if (SharedPreferencesHelper.getSoundMode(this)
+                == SharedPreferencesHelper.MODE_SOUND_ON) {
+            SoundController.setEnable(true);
+        } else {
+            SoundController.setEnable(false);
+        }
+    }
+
     /**
      * 主线程更新UdpThread中的资源回调
      */
@@ -314,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                 case MESSAGE_FRESH_USERLIST:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_USERLIST");
                     if (userListFragment != null) {
-                        userListFragment.freshUserList(userList);
+                        userListFragment.freshUserList(contactList);
                     }
                     break;
                 case MESSAGE_FRESH_MESSAGE:
@@ -343,11 +360,11 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     /**
      * 刷新用户列表
      *
-     * @param userList
+     * @param contactList
      */
     @Override
-    public void freshUserList(List<UserBean> userList) {
-        this.userList = userList;
+    public void freshUserList(List<UserBean> contactList) {
+        this.contactList = contactList;
         mainHandler.sendEmptyMessage(MESSAGE_FRESH_USERLIST);
     }
 
@@ -357,11 +374,15 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * @param listMap
      */
     @Override
-    public void freshMessage(Map<String, List<MessageBean>> listMap) {
+    public void freshMessage(Map<String, List<MessageBean>> listMap, boolean withVibrate, boolean withSound) {
         //在UdpThread回调，必须放到主线程更新UI
 
-        VibrateController.vibrate(this);
-        SoundController.play();
+        if (withVibrate) {
+            VibrateController.vibrate(this);
+        }
+        if (withSound) {
+            SoundController.play(this);
+        }
 
         this.messageListMap = listMap;
         mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);

@@ -3,12 +3,17 @@ package com.android.mazhengyang.minichat.util;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Vibrator;
+import android.util.Log;
+
+import com.android.mazhengyang.minichat.fragment.SettingFragment;
 
 /**
  * Created by mazhengyang on 19-1-17.
  */
 
 public class VibrateController {
+
+    private static final String TAG = "MiniChat." + VibrateController.class.getSimpleName();
 
     private static final int VIBRATOR_TIME = 300;
     private static boolean isOn = true;
@@ -20,18 +25,14 @@ public class VibrateController {
                 vibrator = (Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
             }
             if (vibrator != null) {
+//                Log.d(TAG, "vibrate: ");
                 vibrator.vibrate(VIBRATOR_TIME);
             }
         }
     }
 
-    public static void stop() {
-        if (vibrator != null) {
-            vibrator.cancel();
-        }
-    }
-
     public static void setEnable(boolean on) {
+        Log.d(TAG, "setEnable: on=" + on);
         isOn = on;
     }
 

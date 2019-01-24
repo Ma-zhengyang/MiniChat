@@ -3,19 +3,36 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/tv_title"
+    <RelativeLayout
+        android:id="@+id/icon_title_layout"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        android:gravity="center"
-        android:textColor="@color/deepGray" />
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true">
+
+        <ImageView
+            android:id="@+id/iv_icon"
+            android:layout_width="32dp"
+            android:layout_height="28dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="2dp" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/iv_icon"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/deepGray"
+            android:textSize="10sp" />
+
+    </RelativeLayout>
 
     <com.android.mazhengyang.minichat.widget.BadgeView
         android:id="@+id/bvUnReadMsgCount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_toRightOf="@id/tv_title" />
+        android:layout_marginTop="2dp"
+        android:layout_toRightOf="@id/icon_title_layout" />
 
 </RelativeLayout>

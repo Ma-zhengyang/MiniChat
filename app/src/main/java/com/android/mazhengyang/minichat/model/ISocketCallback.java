@@ -18,7 +18,7 @@ public interface ISocketCallback {
     void freshUserList(List<UserBean> list);
 
     //刷新消息列表
-    void freshMessage(Map<String, List<MessageBean>> listMap);
+    void freshMessage(Map<String, List<MessageBean>> listMap, boolean withVibrate, boolean withSound);
 
     //刷新聊过天的用户列表
     void freshChattedUserList(List<UserBean> list);
