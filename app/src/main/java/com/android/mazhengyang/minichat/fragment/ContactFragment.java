@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.adapter.ContactAdapter;
-import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.model.IContactCallback;
 
 import java.util.List;
@@ -33,9 +33,9 @@ public class ContactFragment extends Fragment implements
 
     private static final String TAG = "MiniChat." + ContactFragment.class.getSimpleName();
 
-    private IContactCallback userListCallback;
+    private IContactCallback contactCallback;
 
-    private List<UserBean> contactList;
+    private List<ContactBean> contactList;
     private ContactAdapter userListAdapter;
 
     @BindView(R.id.tv_head)
@@ -43,8 +43,8 @@ public class ContactFragment extends Fragment implements
     @BindView(R.id.stickyListHeadersListView)
     StickyListHeadersListView stickyListHeadersListView;
 
-    public void setUserListCallback(IContactCallback userListCallback) {
-        this.userListCallback = userListCallback;
+    public void setContactCallback(IContactCallback contactCallback) {
+        this.contactCallback = contactCallback;
     }
 
     @Override
@@ -98,9 +98,9 @@ public class ContactFragment extends Fragment implements
         super.setArguments(args);
     }
 
-    public void freshUserList(List<UserBean> list) {
+    public void freshContact(List<ContactBean> list) {
         this.contactList = list;
-        userListAdapter.freshUserList(list);
+        userListAdapter.freshContact(list);
     }
 
     @Override
@@ -121,8 +121,8 @@ public class ContactFragment extends Fragment implements
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Log.d(TAG, "onItemClick: position=" + position);
-        if (userListCallback != null) {
-            userListCallback.onUserItemClick(contactList.get(position));
+        if (contactCallback != null) {
+            contactCallback.onUserItemClick(contactList.get(position));
         }
     }
 }

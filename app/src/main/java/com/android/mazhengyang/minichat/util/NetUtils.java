@@ -3,43 +3,25 @@ package com.android.mazhengyang.minichat.util;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.Locale;
 
 /**
  * Created by mazhengyang on 19-1-16.
  */
 
-public class Utils {
+public class NetUtils {
 
-    private static final String TAG = "MiniChat." + Utils.class.getSimpleName();
+    private static final String TAG = "MiniChat." + NetUtils.class.getSimpleName();
 
     private static String ip;
-
-    private static SimpleDateFormat format;
-
-    /**
-     * 格式化时间
-     *
-     * @param time
-     * @return
-     */
-    public static String formatTime(Long time) {
-
-        if (format == null) {
-            format = new SimpleDateFormat("HH:mm", Locale.CHINA);
-        }
-        return format.format(new Date(time));
-    }
-
+    private static String deviceId;
 
     /**
      * 判断wifi是否连接
@@ -88,8 +70,27 @@ public class Utils {
     }
 
 
+    /**
+     * 重置
+     */
     public static void resetLocalIpAddress() {
         ip = null;
+    }
+
+    /**
+     * 获取唯一设备id，IMEI
+     *
+     * @param context
+     * @return
+     */
+    public static String getDeviceId(Context context) {
+        if (deviceId == null) {
+            TelephonyManager telephonyManager = (TelephonyManager)
+                    context.getSystemService(Context.TELEPHONY_SERVICE);
+            deviceId = telephonyManager.getImei();
+            Log.d(TAG, "getDeviceId: deviceId=" + deviceId);
+        }
+        return deviceId;
     }
 
 }

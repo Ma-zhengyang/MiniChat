@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -21,13 +20,9 @@ import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.adapter.ChatRoomAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
-import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.bean.ContactBean;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,7 +35,7 @@ public class ChatRoomFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + ChatRoomFragment.class.getSimpleName();
 
-    private UserBean userBean;
+    private ContactBean userBean;
     private List<MessageBean> messageBeanList;
     private ChatRoomAdapter chatRoomAdapter;
 
@@ -53,7 +48,7 @@ public class ChatRoomFragment extends Fragment {
     @BindView(R.id.chatroom_sendbtn)
     Button sendBtn;
 
-    public void setUserBean(UserBean userBean) {
+    public void setUserBean(ContactBean userBean) {
         Log.d(TAG, "setUserBean: ");
         this.userBean = userBean;
     }
@@ -129,6 +124,7 @@ public class ChatRoomFragment extends Fragment {
         public void onClick(View v) {
 
             String receiverIp = userBean.getUserIp();
+            String receiverDeviceCode = userBean.getDeviceCode();
             String message = editText.getText().toString().trim();
 
             Log.d(TAG, "onClick: receiverIp=" + receiverIp);
@@ -136,7 +132,11 @@ public class ChatRoomFragment extends Fragment {
 
             if (!"".equals(message)) {
                 UdpThread udpThread = UdpThread.getInstance();
-                MessageBean messageBean = udpThread.packUdpMessage(receiverIp, message, UdpThread.MESSAGE_TO_TARGET);
+                MessageBean messageBean = udpThread.packUdpMessage(
+                        receiverDeviceCode,
+                        receiverIp,
+                        message,
+                        UdpThread.MESSAGE_TO_TARGET);
                 udpThread.send(messageBean);
                 editText.setText(null);
             }

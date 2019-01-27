@@ -3,6 +3,8 @@ package com.android.mazhengyang.minichat.bean;
 import android.util.Base64;
 import android.util.Log;
 
+import com.android.mazhengyang.minichat.util.Base64Util;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -17,9 +19,10 @@ public class MessageBean {
     private String senderName; //消息发送者的名字
     private String senderIp; //发送者ip
     private String receiverIp; //接收者ip
+    private String senderDeviceCode; //发送者imei码
+    private String receiverDeviceCode; //接收者imei码
     private String msg; //信息内容
     private String sendTime; //发送时间 TODO, 这里显示的是本机时间，并不是对方的时间，可能错乱的
-    private String deviceCode;//手机唯一识别号
     private int type;//当前消息的类型
     private boolean readed = false;//消息是否已读
 
@@ -29,11 +32,12 @@ public class MessageBean {
 
     public MessageBean(JSONObject object) {
         try {
-            senderName = new String(Base64.decode(object.getString("senderName").getBytes(), Base64.DEFAULT));
+            senderName = object.getString("senderName");
             senderIp = object.getString("senderIp");
             receiverIp = object.getString("receiverIp");
-            deviceCode = object.getString("deviceCode");
-            msg = new String(Base64.decode(object.getString("msg").getBytes(), Base64.DEFAULT));
+            senderDeviceCode = object.getString("senderDeviceCode");
+            receiverDeviceCode = object.getString("receiverDeviceCode");
+            msg = Base64Util.encrypt(object.getString("msg"));
             type = object.getInt("type");
             sendTime = object.getString("sendTime");
             readed = object.getBoolean("readed");
@@ -48,11 +52,12 @@ public class MessageBean {
     public String toString() {
         try {
             JSONObject object = new JSONObject();
-            object.put("senderName", Base64.encodeToString(senderName.getBytes(), Base64.DEFAULT));
+            object.put("senderName", senderName);
             object.put("senderIp", senderIp);
             object.put("receiverIp", receiverIp);
-            object.put("deviceCode", deviceCode);
-            object.put("msg", Base64.encodeToString(msg.getBytes(), Base64.DEFAULT));
+            object.put("senderDeviceCode", senderDeviceCode);
+            object.put("receiverDeviceCode", receiverDeviceCode);
+            object.put("msg", Base64Util.decrypt(msg));
             object.put("type", type);
             object.put("sendTime", sendTime);
             object.put("readed", readed);
@@ -104,12 +109,20 @@ public class MessageBean {
         Log.d(TAG, "setSendTime: sendTime=" + sendTime);
     }
 
-    public String getDeviceCode() {
-        return deviceCode;
+    public String getSenderDeviceCode() {
+        return senderDeviceCode;
     }
 
-    public void setDeviceCode(String deviceCode) {
-        this.deviceCode = deviceCode;
+    public void setSenderDeviceCode(String senderDeviceCode) {
+        this.senderDeviceCode = senderDeviceCode;
+    }
+
+    public String getReceiverDeviceCode() {
+        return receiverDeviceCode;
+    }
+
+    public void setReceiverDeviceCode(String receiverDeviceCode) {
+        this.receiverDeviceCode = receiverDeviceCode;
     }
 
     public int getType() {

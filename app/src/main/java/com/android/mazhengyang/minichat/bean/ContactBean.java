@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Created by mazhengyang on 18-11-27.
  */
 
-public class UserBean implements Serializable {
+public class ContactBean implements Serializable {
 
     private String userName; //用户名
     private String userIp; //ip地址

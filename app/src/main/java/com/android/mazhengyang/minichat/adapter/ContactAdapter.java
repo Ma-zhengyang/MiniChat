@@ -12,8 +12,8 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.bean.ContactBean;
+import com.android.mazhengyang.minichat.util.NetUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,14 +29,14 @@ public class ContactAdapter extends BaseAdapter implements
 
     private static final String TAG = "MiniChat." + ContactAdapter.class.getSimpleName();
 
-    private List<UserBean> list;
+    private List<ContactBean> list;
 
     private List<String> mNameList = new ArrayList<>(20);//暂最多20个好友
     private int[] mSectionIndices;
     private Character[] mSectionLetters;
     private LayoutInflater mInflater;
 
-    public ContactAdapter(Context context, List<UserBean> list) {
+    public ContactAdapter(Context context, List<ContactBean> list) {
         Log.d(TAG, "ContactAdapter: ");
 
         mInflater = LayoutInflater.from(context);
@@ -45,8 +45,8 @@ public class ContactAdapter extends BaseAdapter implements
         formatList();
     }
 
-    public void freshUserList(List<UserBean> list) {
-        Log.d(TAG, "freshUserList: ");
+    public void freshContact(List<ContactBean> list) {
+        Log.d(TAG, "freshContact: ");
 
         this.list = list;
         formatList();
@@ -149,7 +149,7 @@ public class ContactAdapter extends BaseAdapter implements
             holder = (ViewHolder) convertView.getTag();
         }
 
-        UserBean user = list.get(position);
+        ContactBean user = list.get(position);
 //        Log.d(TAG, "getView: user=" + user);
 
         if (user != null) {
@@ -165,7 +165,7 @@ public class ContactAdapter extends BaseAdapter implements
                 holder.tvUserName.setTextColor(Color.GRAY);
             }
 
-            if (ip.equals(Utils.getLocalIpAddress())) {
+            if (ip.equals(NetUtils.getLocalIpAddress())) {
                 holder.ivUserIcon.setImageResource(R.drawable.user_self);
                 holder.tvUserName.setText(name);
             } else {

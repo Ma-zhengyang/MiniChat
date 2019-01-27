@@ -13,6 +13,7 @@
     <string name="setting_sound">声音</string>
     <string name="setting_vibrate">震动</string>
 
+    <string name="no_permission">获取权限失败，程序将无法使用</string>
     <string name="wanshan">完善中...</string>
 
 </resources>

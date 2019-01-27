@@ -13,9 +13,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.adapter.ChatHistoryAdapter;
+import com.android.mazhengyang.minichat.adapter.ChatAdapter;
 import com.android.mazhengyang.minichat.bean.MessageBean;
-import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.model.IContactCallback;
 
 import java.util.List;
@@ -28,14 +28,14 @@ import butterknife.ButterKnife;
  * Created by mazhengyang on 18-12-29.
  */
 
-public class ChatHistoryFragment extends Fragment {
+public class ChatFragment extends Fragment {
 
-    private static final String TAG = "MiniChat." + ChatHistoryFragment.class.getSimpleName();
+    private static final String TAG = "MiniChat." + ChatFragment.class.getSimpleName();
 
-    private List<UserBean> chatedUserList;
+    private List<ContactBean> chattedContactList;
     private Map<String, List<MessageBean>> messageBeanList;
 
-    private ChatHistoryAdapter chatHistoryAdapter;
+    private ChatAdapter chatHistoryAdapter;
 
     private IContactCallback userListCallback;
 
@@ -44,15 +44,15 @@ public class ChatHistoryFragment extends Fragment {
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
 
-    public void setChatedUserList(List<UserBean> chatedUserList) {
-        Log.d(TAG, "setChatedUserList: ");
-        this.chatedUserList = chatedUserList;
+    public void setChattedUserList(List<ContactBean> chattedContactList) {
+        Log.d(TAG, "setChattedUserList: ");
+        this.chattedContactList = chattedContactList;
     }
 
-    public void updateChatedUserList(List<UserBean> chatedUserList) {
-        Log.d(TAG, "updateChatedUserList: ");
+    public void updateChattedUserList(List<ContactBean> chattedContactList) {
+        Log.d(TAG, "updateChattedUserList: ");
         if (chatHistoryAdapter != null) {
-            chatHistoryAdapter.updateChatedUserList(chatedUserList);
+            chatHistoryAdapter.updateChatedUserList(chattedContactList);
         }
     }
 
@@ -71,7 +71,7 @@ public class ChatHistoryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: ");
-        View view = inflater.inflate(R.layout.fragment_chat_history, null);
+        View view = inflater.inflate(R.layout.fragment_chat, null);
         ButterKnife.bind(this, view);
 
         tvHead.setText(R.string.tab_chat_history);
@@ -81,7 +81,7 @@ public class ChatHistoryFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        chatHistoryAdapter = new ChatHistoryAdapter(context, chatedUserList);
+        chatHistoryAdapter = new ChatAdapter(context, chattedContactList);
         chatHistoryAdapter.setUserListCallback(userListCallback);
         recyclerView.setAdapter(chatHistoryAdapter);
 

@@ -11,9 +11,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.mazhengyang.minichat.R;
-import com.android.mazhengyang.minichat.bean.UserBean;
+import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.model.IContactCallback;
-import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.widget.BadgeView;
 import com.daimajia.swipe.SwipeLayout;
 
@@ -26,12 +26,12 @@ import butterknife.ButterKnife;
  * Created by mazhengyang on 18-12-29.
  */
 
-public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final String TAG = "MiniChat." + ChatHistoryAdapter.class.getSimpleName();
+    private static final String TAG = "MiniChat." + ChatAdapter.class.getSimpleName();
 
     private Context context;
-    private List<UserBean> chatedUserList;
+    private List<ContactBean> chattedContactList;
 
     private IContactCallback userListCallback;
 
@@ -40,40 +40,40 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.userListCallback = userListCallback;
     }
 
-    public void updateChatedUserList(List<UserBean> chatedUserList) {
+    public void updateChatedUserList(List<ContactBean> chattedContactList) {
         Log.d(TAG, "updateChatedUserList: userListCallback=" + userListCallback);
-        this.chatedUserList = chatedUserList;
+        this.chattedContactList = chattedContactList;
         notifyDataSetChanged();
     }
 
-    public ChatHistoryAdapter(Context context, List<UserBean> chatedUserList) {
-        Log.d(TAG, "ChatHistoryAdapter: ");
+    public ChatAdapter(Context context, List<ContactBean> chattedContactList) {
+        Log.d(TAG, "ChatAdapter: ");
         this.context = context;
-        this.chatedUserList = chatedUserList;
+        this.chattedContactList = chattedContactList;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Log.d(TAG, "onCreateViewHolder: ");
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_user_chat_history, parent, false);
+                .inflate(R.layout.item_chat, parent, false);
         ChatedUserItemViewHolder vh = new ChatedUserItemViewHolder(v);
         return vh;
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        if (chatedUserList == null) {
-            Log.d(TAG, "onBindViewHolder: chatedUserList is null");
+        if (chattedContactList == null) {
+            Log.d(TAG, "onBindViewHolder: chattedContactList is null");
             return;
         }
 
-        UserBean userBean = chatedUserList.get(position);
+        ContactBean userBean = chattedContactList.get(position);
 
         String senderIp = userBean.getUserIp();
         Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
 
-        if (senderIp.equals(Utils.getLocalIpAddress())) {
+        if (senderIp.equals(NetUtils.getLocalIpAddress())) {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
         } else {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
@@ -88,11 +88,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemCount() {
-        if (chatedUserList == null) {
-            Log.d(TAG, "getItemCount: chatedUserList is null");
+        if (chattedContactList == null) {
+            Log.d(TAG, "getItemCount: chattedContactList is null");
             return 0;
         }
-        int count = chatedUserList.size();
+        int count = chattedContactList.size();
         Log.d(TAG, "getItemCount: " + count);
         return count;
     }
@@ -133,7 +133,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         @Override
         public void onClick(View v) {
             if (userListCallback != null) {
-                userListCallback.onUserItemClick(chatedUserList.get(getPosition()));
+                userListCallback.onUserItemClick(chattedContactList.get(getPosition()));
             }
         }
     }

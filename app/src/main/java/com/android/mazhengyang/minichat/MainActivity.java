@@ -1,14 +1,18 @@
 package com.android.mazhengyang.minichat;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,18 +22,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.bean.MessageBean;
-import com.android.mazhengyang.minichat.bean.UserBean;
-import com.android.mazhengyang.minichat.fragment.ChatHistoryFragment;
+import com.android.mazhengyang.minichat.fragment.ChatFragment;
 import com.android.mazhengyang.minichat.fragment.ChatRoomFragment;
 import com.android.mazhengyang.minichat.fragment.ContactFragment;
 import com.android.mazhengyang.minichat.fragment.SettingFragment;
-import com.android.mazhengyang.minichat.model.ISocketCallback;
 import com.android.mazhengyang.minichat.model.IContactCallback;
-import com.android.mazhengyang.minichat.util.SoundController;
-import com.android.mazhengyang.minichat.util.Utils;
+import com.android.mazhengyang.minichat.model.ISocketCallback;
+import com.android.mazhengyang.minichat.saver.MessageSaver;
 import com.android.mazhengyang.minichat.util.DayNightController;
+import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.util.SharedPreferencesHelper;
+import com.android.mazhengyang.minichat.util.SoundController;
 import com.android.mazhengyang.minichat.util.VibrateController;
 import com.android.mazhengyang.minichat.widget.BadgeView;
 
@@ -43,9 +48,11 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
     private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
 
-    public static final int MESSAGE_FRESH_USERLIST = 1024;
+    private static final int PERMISSIONS_REQUEST_READ_PHONE_STATE = 1024;
+
+    public static final int MESSAGE_FRESH_CONTACT = 1024;
     public static final int MESSAGE_FRESH_MESSAGE = 1025;
-    public static final int MESSAGE_FRESH_CHAT_HISTORY = 1026;
+    public static final int MESSAGE_FRESH_CHATTED = 1026;
 
     private static final int INDEX_CHAT_HISTORY = 0;
     private static final int INDEX_USERLIST = 1;
@@ -61,16 +68,17 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private MainHandler mainHandler = new MainHandler();
     private NetWorkStateReceiver netWorkStateReceiver;
     private UdpThread udpThread;
+    private MessageSaver messageSaver;
 
-    private ChatHistoryFragment chatHistoryFragment;
+    private ChatFragment chatHistoryFragment;
     private ContactFragment userListFragment;
     private SettingFragment settingFragment;
     private ChatRoomFragment chatRoomFragment;
     private Fragment currentFragment;
 
     //在UdpThread中实现
-    private List<UserBean> contactList;
-    private List<UserBean> chattedUserList;
+    private List<ContactBean> contactList;
+    private List<ContactBean> chattedContactList;
     private Map<String, List<MessageBean>> messageListMap;
 
     @Override
@@ -82,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        Utils.resetLocalIpAddress();
+        NetUtils.resetLocalIpAddress();
 
         initView();
         initVibrateSound();
@@ -94,16 +102,21 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         udpThread = UdpThread.getInstance();
         udpThread.setSocketCallback(this);
-        udpThread.startWork();
-
-        netWorkStateReceiver = new NetWorkStateReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(netWorkStateReceiver, intentFilter);
+        messageSaver = new MessageSaver();
 
         userListFragment = new ContactFragment();
-        userListFragment.setUserListCallback(this);
+        userListFragment.setContactCallback(this);
         showFragment(userListFragment);
+
+        if (!hasPhonePermission()) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_PHONE_STATE},
+                    PERMISSIONS_REQUEST_READ_PHONE_STATE);
+        } else {
+            udpThread.startWork(this);
+            registerReceiver();
+        }
+
     }
 
     @Override
@@ -111,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         Log.d(TAG, "onResume: ");
         super.onResume();
 
-        boolean isWifiConnected = Utils.isWifiConnected(this);
+        boolean isWifiConnected = NetUtils.isWifiConnected(this);
         Log.d(TAG, "onResume: isWifiConnected=" + isWifiConnected);
         udpThread.setOnline(isWifiConnected);
     }
@@ -129,8 +142,53 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         udpThread.release();
         mainHandler.removeCallbacksAndMessages(null);
-        unregisterReceiver(netWorkStateReceiver);
+        if (netWorkStateReceiver != null) {
+            unregisterReceiver(netWorkStateReceiver);
+        }
         DayNightController.onDestory();
+    }
+
+    private void registerReceiver() {
+        Log.d(TAG, "registerReceiver: ");
+        netWorkStateReceiver = new NetWorkStateReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(netWorkStateReceiver, intentFilter);
+    }
+
+    private boolean hasPhonePermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            Log.d(TAG, "hasPhonePermission: no READ_PHONE_STATE permission");
+            return false;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d(TAG, "onRequestPermissionsResult: requestCode=" + requestCode);
+
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_READ_PHONE_STATE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "onRequestPermissionsResult: PERMISSION_GRANTED grant success");
+                    udpThread.startWork(this);
+                    registerReceiver();
+                } else {
+                    Toast.makeText(getApplicationContext(), getApplicationContext().
+                            getString(R.string.no_permission), Toast.LENGTH_LONG)
+                            .show();
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
     }
 
     @Override
@@ -162,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             String action = intent.getAction();
             Log.d(TAG, "onReceive: " + action);
             if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-                boolean isWifiConnected = Utils.isWifiConnected(MainActivity.this);
+                boolean isWifiConnected = NetUtils.isWifiConnected(MainActivity.this);
                 Log.d(TAG, "onReceive: isWifiConnected=" + isWifiConnected);
 
                 if (!isWifiConnected) {
@@ -228,10 +286,10 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                 switch (position) {
                     case INDEX_CHAT_HISTORY:
                         if (chatHistoryFragment == null) {
-                            chatHistoryFragment = new ChatHistoryFragment();
+                            chatHistoryFragment = new ChatFragment();
                             chatHistoryFragment.setUserListCallback(MainActivity.this);
                         }
-                        chatHistoryFragment.setChatedUserList(chattedUserList);
+                        chatHistoryFragment.setChattedUserList(chattedContactList);
                         showFragment(chatHistoryFragment);
                         break;
                     case INDEX_USERLIST:
@@ -328,27 +386,27 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case MESSAGE_FRESH_USERLIST:
-                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_USERLIST");
+                case MESSAGE_FRESH_CONTACT:
+                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_CONTACT");
                     if (userListFragment != null) {
-                        userListFragment.freshUserList(contactList);
+                        userListFragment.freshContact(contactList);
                     }
                     break;
                 case MESSAGE_FRESH_MESSAGE:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE");
                     if (currentFragment == chatRoomFragment) {
-                        UserBean chattingUser = udpThread.getChattingUser();
+                        ContactBean chattingUser = udpThread.getChattingUser();
                         if (chattingUser != null) {
-                            List<MessageBean> list = messageListMap.get(chattingUser.getUserIp());
+                            List<MessageBean> list = messageListMap.get(chattingUser.getDeviceCode());
                             chatRoomFragment.freshMessageList(list);
                         }
                     }
                     break;
-                case MESSAGE_FRESH_CHAT_HISTORY:
-                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_CHAT_HISTORY");
+                case MESSAGE_FRESH_CHATTED:
+                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_CHATTED");
                     updateUnReadIndicator();
                     if (chatHistoryFragment != null) {
-                        chatHistoryFragment.updateChatedUserList(chattedUserList);
+                        chatHistoryFragment.updateChattedUserList(chattedContactList);
                     }
                     break;
                 default:
@@ -363,9 +421,9 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * @param contactList
      */
     @Override
-    public void freshUserList(List<UserBean> contactList) {
+    public void freshContact(List<ContactBean> contactList) {
         this.contactList = contactList;
-        mainHandler.sendEmptyMessage(MESSAGE_FRESH_USERLIST);
+        mainHandler.sendEmptyMessage(MESSAGE_FRESH_CONTACT);
     }
 
     /**
@@ -394,16 +452,16 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * @param list
      */
     @Override
-    public void freshChattedUserList(List<UserBean> list) {
-        this.chattedUserList = list;
-        mainHandler.sendEmptyMessage(MESSAGE_FRESH_CHAT_HISTORY);
+    public void freshChattedUserList(List<ContactBean> list) {
+        this.chattedContactList = list;
+        mainHandler.sendEmptyMessage(MESSAGE_FRESH_CHATTED);
     }
 
     /**
      * @param user
      */
     @Override
-    public void onUserItemClick(UserBean user) {
+    public void onUserItemClick(ContactBean user) {
 
         if (chatRoomFragment == null) {
             chatRoomFragment = new ChatRoomFragment();
@@ -416,7 +474,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         showFragment(chatRoomFragment);
         udpThread.setChattingUser(user);
 
-        if (!user.getUserIp().equals(Utils.getLocalIpAddress())) {
+        if (!user.getUserIp().equals(NetUtils.getLocalIpAddress())) {
             user.setUnReadMsgCount(0);
             updateUnReadIndicator();
         }
@@ -426,13 +484,13 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * 更新未读消息数
      */
     private void updateUnReadIndicator() {
-        int totel = 0;
-        if (chattedUserList != null) {
-            for (UserBean userBean : chattedUserList) {
-                totel += userBean.getUnReadMsgCount();
+        int total = 0;
+        if (chattedContactList != null) {
+            for (ContactBean userBean : chattedContactList) {
+                total += userBean.getUnReadMsgCount();
             }
         }
-        badgeView.setBadgeCount(totel);
+        badgeView.setBadgeCount(total);
     }
 
 }
