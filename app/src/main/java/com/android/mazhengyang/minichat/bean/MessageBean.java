@@ -1,6 +1,5 @@
 package com.android.mazhengyang.minichat.bean;
 
-import android.util.Base64;
 import android.util.Log;
 
 import com.android.mazhengyang.minichat.util.Base64Util;
@@ -21,10 +20,11 @@ public class MessageBean {
     private String receiverIp; //接收者ip
     private String senderDeviceCode; //发送者imei码
     private String receiverDeviceCode; //接收者imei码
-    private String msg; //信息内容
+    private String message; //信息内容
     private String sendTime; //发送时间 TODO, 这里显示的是本机时间，并不是对方的时间，可能错乱的
     private int type;//当前消息的类型
     private boolean readed = false;//消息是否已读
+    private String key;//消息归属标识，值是自己或对方imei码，用来标识这条消息归属到哪一个聊天历史人中去
 
     public MessageBean() {
         Log.d(TAG, "MessageBean: ");
@@ -37,10 +37,11 @@ public class MessageBean {
             receiverIp = object.getString("receiverIp");
             senderDeviceCode = object.getString("senderDeviceCode");
             receiverDeviceCode = object.getString("receiverDeviceCode");
-            msg = Base64Util.encrypt(object.getString("msg"));
+            message = Base64Util.decrypt(object.getString("message"));
             type = object.getInt("type");
             sendTime = object.getString("sendTime");
             readed = object.getBoolean("readed");
+            sendTime = object.getString("key");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -57,10 +58,11 @@ public class MessageBean {
             object.put("receiverIp", receiverIp);
             object.put("senderDeviceCode", senderDeviceCode);
             object.put("receiverDeviceCode", receiverDeviceCode);
-            object.put("msg", Base64Util.decrypt(msg));
+            object.put("message", Base64Util.encrypt(message));
             object.put("type", type);
             object.put("sendTime", sendTime);
             object.put("readed", readed);
+            object.put("key", key);
             return object.toString();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -92,12 +94,12 @@ public class MessageBean {
         this.receiverIp = receiverIp;
     }
 
-    public String getMsg() {
-        return msg;
+    public String getMessage() {
+        return message;
     }
 
-    public void setMsg(String msg) {
-        this.msg = msg;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public String getSendTime() {
@@ -139,5 +141,13 @@ public class MessageBean {
 
     public void setReaded(boolean readed) {
         this.readed = readed;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }

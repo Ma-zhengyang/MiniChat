@@ -7,6 +7,7 @@ import android.util.Log;
 import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
+import com.android.mazhengyang.minichat.saver.MessageSaver;
 import com.android.mazhengyang.minichat.util.Constant;
 import com.android.mazhengyang.minichat.util.DataUtil;
 import com.android.mazhengyang.minichat.util.NetUtils;
@@ -53,6 +54,7 @@ public class UdpThread extends Thread {
     private final static int DEFAULT_BUFFERSIZE = 1024 * 2;
     private byte[] bufferData;
 
+    private MessageSaver messageSaver;
     private Context context;
 
     //联系人列表
@@ -60,13 +62,11 @@ public class UdpThread extends Thread {
     //聊过天的用户列表
     private List<ContactBean> chattedContactList = new ArrayList<>();
     //保存消息  String对方IMEI码, List<MessageBean>聊天内容
-    private Map<String, List<MessageBean>> messageList = new ConcurrentHashMap<>();
-
+    private Map<String, List<MessageBean>> messageListMap = new ConcurrentHashMap<>();
     //正在和自己聊天的对方用户
     private ContactBean chattingUser;
 
     private ISocketCallback listener;
-
     private static UdpThread instance;
 
     public static UdpThread getInstance() {
@@ -120,6 +120,7 @@ public class UdpThread extends Thread {
         Log.d(TAG, "startWork: ");
         try {
             this.context = context;
+            messageSaver = new MessageSaver();
             executorService = Executors.newFixedThreadPool(10);
             multicastSocket = new MulticastSocket(port);
             bufferData = new byte[DEFAULT_BUFFERSIZE];
@@ -151,7 +152,7 @@ public class UdpThread extends Thread {
             try {
                 if (isOnline) {
                     send(packUdpMessage(
-                            NetUtils.getDeviceId(context),
+                            NetUtils.getDeviceDevice(context),
                             Constant.ALL_ADDRESS,
                             "",
                             ACTION_ONLINE).toString(),
@@ -168,7 +169,7 @@ public class UdpThread extends Thread {
                     }
 
                     //正常release方式退出的，能send
-                    send(packUdpMessage(NetUtils.getDeviceId(context),
+                    send(packUdpMessage(NetUtils.getDeviceDevice(context),
                             Constant.ALL_ADDRESS,
                             "",
                             ACTION_OFFLINE).toString(),
@@ -199,6 +200,7 @@ public class UdpThread extends Thread {
             executorService.shutdown();
             executorService = null;
         }
+        messageSaver.finish();
         instance = null;
     }
 
@@ -281,9 +283,9 @@ public class UdpThread extends Thread {
         messageBean.setSenderName(Build.DEVICE);
         messageBean.setSenderIp(NetUtils.getLocalIpAddress());
         messageBean.setReceiverIp(receiverIp);
-        messageBean.setSenderDeviceCode(NetUtils.getDeviceId(context));
+        messageBean.setSenderDeviceCode(NetUtils.getDeviceDevice(context));
         messageBean.setReceiverDeviceCode(receiverDeviceCode);
-        messageBean.setMsg(message);
+        messageBean.setMessage(message);
         messageBean.setSendTime(DataUtil.formatTime(System.currentTimeMillis()));
         messageBean.setType(type);
         messageBean.setReaded(false);
@@ -295,7 +297,7 @@ public class UdpThread extends Thread {
      * 处理接收到的消息
      *
      * @param data
-     * @param datagramPacket
+     * @param
      */
     private void handleReceivedMsg(byte[] data, DatagramPacket datagramPacket) {
         Log.d(TAG, "handleReceivedMsg: start.");
@@ -345,7 +347,7 @@ public class UdpThread extends Thread {
 
                     //自己上线后，对方接收到ACTION_ONLINE后执行这里，这样就会把对方加入到自己列表
                     if (!selfIp.equals(senderIp)) {
-                        send(packUdpMessage(NetUtils.getDeviceId(context),
+                        send(packUdpMessage(NetUtils.getDeviceDevice(context),
                                 Constant.ALL_ADDRESS,
                                 "",
                                 ACTION_ONLINED).toString(),
@@ -421,7 +423,6 @@ public class UdpThread extends Thread {
 
         String senderDeviceCode = messageBean.getSenderDeviceCode();
         String receiverDeviceCode = messageBean.getReceiverDeviceCode();
-        String deviceCodeSelf = NetUtils.getDeviceId(context);
 
         ContactBean whoSend = null;//这条消息是谁发来的
         ContactBean whoReceiver = null;//这条消息是谁接收的
@@ -465,14 +466,18 @@ public class UdpThread extends Thread {
         } else {//对方发给我的,key是senderIp
             key = senderDeviceCode;
         }
-        if (messageList.containsKey(key)) {
-            List<MessageBean> list = messageList.get(key);
+        if (messageListMap.containsKey(key)) {
+            List<MessageBean> list = messageListMap.get(key);
             list.add(messageBean);
         } else {
             List<MessageBean> list = new ArrayList<>();
             list.add(messageBean);
-            messageList.put(key, list);
+            messageListMap.put(key, list);
         }
+
+        messageBean.setKey(key);
+        //保存消息
+        messageSaver.addMessage(messageBean);
 
         if (chattingUser != null) {//正在聊天界面
             Log.d(TAG, "freshMessage: current is in chatRoomFragment");
@@ -483,20 +488,20 @@ public class UdpThread extends Thread {
                     Log.d(TAG, "freshMessage: message send by self");
                     messageBean.setReaded(true);
                     if (listener != null) {
-                        listener.freshMessage(messageList, false, false);
+                        listener.freshMessage(messageListMap, false, false);
                     }
                 } else {//别人消息进来
                     Log.d(TAG, "freshMessage: message send by other");
                     int unReadMsgCount = whoSend.getUnReadMsgCount();
                     whoSend.setUnReadMsgCount(++unReadMsgCount);
                     if (listener != null) {
-                        listener.freshMessage(messageList, true, false);
+                        listener.freshMessage(messageListMap, true, false);
                     }
                 }
                 if (!chattedContactList.contains(whoSend)) {
                     chattedContactList.add(whoSend);
                 }
-                whoSend.setRecentMsg(messageBean.getMsg());
+                whoSend.setRecentMsg(messageBean.getMessage());
                 whoSend.setRecentTime(messageBean.getSendTime());
             } else {//当前正在和朋友聊天
                 String ip = chattingUser.getUserIp();
@@ -507,9 +512,9 @@ public class UdpThread extends Thread {
                         chattedContactList.add(whoSend);
                     }
                     if (listener != null) {
-                        listener.freshMessage(messageList, true, false);
+                        listener.freshMessage(messageListMap, true, false);
                     }
-                    whoSend.setRecentMsg(messageBean.getMsg());
+                    whoSend.setRecentMsg(messageBean.getMessage());
                     whoSend.setRecentTime(messageBean.getSendTime());
                 } else if (ip.equals(receiverIp)) {//自己发消息时
                     messageBean.setReaded(true);
@@ -517,9 +522,9 @@ public class UdpThread extends Thread {
                         chattedContactList.add(whoReceiver);
                     }
                     if (listener != null) {
-                        listener.freshMessage(messageList, false, false);
+                        listener.freshMessage(messageListMap, false, false);
                     }
-                    whoReceiver.setRecentMsg(messageBean.getMsg());
+                    whoReceiver.setRecentMsg(messageBean.getMessage());
                     whoReceiver.setRecentTime(messageBean.getSendTime());
                 } else {
                     //第三方朋友消息进来
@@ -530,9 +535,9 @@ public class UdpThread extends Thread {
                             chattedContactList.add(whoSend);
                         }
                         if (listener != null) {
-                            listener.freshMessage(messageList, true, false);
+                            listener.freshMessage(messageListMap, true, false);
                         }
-                        whoSend.setRecentMsg(messageBean.getMsg());
+                        whoSend.setRecentMsg(messageBean.getMessage());
                         whoSend.setRecentTime(messageBean.getSendTime());
                     }
                 }
@@ -548,9 +553,9 @@ public class UdpThread extends Thread {
                     chattedContactList.add(whoSend);
                 }
                 if (listener != null) {
-                    listener.freshMessage(messageList, true, true);
+                    listener.freshMessage(messageListMap, true, true);
                 }
-                whoSend.setRecentMsg(messageBean.getMsg());
+                whoSend.setRecentMsg(messageBean.getMessage());
                 whoSend.setRecentTime(messageBean.getSendTime());
             }
         }

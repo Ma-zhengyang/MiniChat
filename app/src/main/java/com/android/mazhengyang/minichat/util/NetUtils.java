@@ -83,12 +83,12 @@ public class NetUtils {
      * @param context
      * @return
      */
-    public static String getDeviceId(Context context) {
+    public static String getDeviceDevice(Context context) {
         if (deviceId == null) {
             TelephonyManager telephonyManager = (TelephonyManager)
                     context.getSystemService(Context.TELEPHONY_SERVICE);
             deviceId = telephonyManager.getImei();
-            Log.d(TAG, "getDeviceId: deviceId=" + deviceId);
+            Log.d(TAG, "getDeviceDevice: deviceId=" + deviceId);
         }
         return deviceId;
     }

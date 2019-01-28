@@ -22,7 +22,7 @@ public class Base64Util {
     }
 
     public static String decrypt(String encodedString) {
-        String decodedString = Base64.encodeToString(encodedString.getBytes(), Base64.DEFAULT);
+        String decodedString = new String(Base64.decode(encodedString, Base64.DEFAULT));
         Log.d(TAG, "decrypt: decodedString=" + decodedString);
         return decodedString;
     }

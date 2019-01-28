@@ -72,7 +72,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         MessageBean messageBean = messageList.get(position);
         ((UserItemViewHolder) holder).tvTime.setText(messageBean.getSendTime());
-        ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMsg());
+        ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMessage());
 
         String senderIp = messageBean.getSenderIp();
         String receiverIp = messageBean.getReceiverIp();

@@ -1,6 +1,7 @@
 package com.android.mazhengyang.minichat;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +31,8 @@ import com.android.mazhengyang.minichat.fragment.ContactFragment;
 import com.android.mazhengyang.minichat.fragment.SettingFragment;
 import com.android.mazhengyang.minichat.model.IContactCallback;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
+import com.android.mazhengyang.minichat.permissions.PermissionsManager;
+import com.android.mazhengyang.minichat.permissions.PermissionsResultAction;
 import com.android.mazhengyang.minichat.saver.MessageSaver;
 import com.android.mazhengyang.minichat.util.DayNightController;
 import com.android.mazhengyang.minichat.util.NetUtils;
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
 
     private static final int PERMISSIONS_REQUEST_READ_PHONE_STATE = 1024;
+    private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1025;
 
     public static final int MESSAGE_FRESH_CONTACT = 1024;
     public static final int MESSAGE_FRESH_MESSAGE = 1025;
@@ -89,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        requestPermissions();
 
         NetUtils.resetLocalIpAddress();
 
@@ -107,16 +112,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         userListFragment = new ContactFragment();
         userListFragment.setContactCallback(this);
         showFragment(userListFragment);
-
-        if (!hasPhonePermission()) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_PHONE_STATE},
-                    PERMISSIONS_REQUEST_READ_PHONE_STATE);
-        } else {
-            udpThread.startWork(this);
-            registerReceiver();
-        }
-
     }
 
     @Override
@@ -148,6 +143,14 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         DayNightController.onDestory();
     }
 
+    private void start() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                == PackageManager.PERMISSION_GRANTED) {
+            udpThread.startWork(this);
+            registerReceiver();
+        }
+    }
+
     private void registerReceiver() {
         Log.d(TAG, "registerReceiver: ");
         netWorkStateReceiver = new NetWorkStateReceiver();
@@ -156,14 +159,24 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         registerReceiver(netWorkStateReceiver, intentFilter);
     }
 
-    private boolean hasPhonePermission() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
-                == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        } else {
-            Log.d(TAG, "hasPhonePermission: no READ_PHONE_STATE permission");
-            return false;
-        }
+    @TargetApi(23)
+    private void requestPermissions() {
+        PermissionsManager.getInstance().
+                requestAllManifestPermissionsIfNecessary(this, new PermissionsResultAction() {
+                    @Override
+                    public void onGranted() {
+                        Log.d(TAG, "onGranted: all permissions have been granted");
+                        start();
+                    }
+
+                    @Override
+                    public void onDenied(String permission) {
+                        Log.d(TAG, "onDenied: Permission " + permission);
+                        Toast.makeText(MainActivity.this,
+                                String.format(getString(R.string.granted_permission), permission),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
@@ -172,23 +185,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Log.d(TAG, "onRequestPermissionsResult: requestCode=" + requestCode);
 
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_READ_PHONE_STATE: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "onRequestPermissionsResult: PERMISSION_GRANTED grant success");
-                    udpThread.startWork(this);
-                    registerReceiver();
-                } else {
-                    Toast.makeText(getApplicationContext(), getApplicationContext().
-                            getString(R.string.no_permission), Toast.LENGTH_LONG)
-                            .show();
-                }
-                break;
-            }
-            default:
-                break;
-        }
-
+        PermissionsManager.getInstance().notifyPermissionsChange(permissions, grantResults);
     }
 
     @Override
