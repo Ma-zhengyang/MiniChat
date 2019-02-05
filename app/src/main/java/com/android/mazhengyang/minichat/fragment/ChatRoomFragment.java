@@ -19,8 +19,8 @@ import android.widget.TextView;
 import com.android.mazhengyang.minichat.R;
 import com.android.mazhengyang.minichat.UdpThread;
 import com.android.mazhengyang.minichat.adapter.ChatRoomAdapter;
-import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.bean.ContactBean;
+import com.android.mazhengyang.minichat.bean.MessageBean;
 
 import java.util.List;
 
@@ -38,6 +38,7 @@ public class ChatRoomFragment extends Fragment {
     private ContactBean userBean;
     private List<MessageBean> messageBeanList;
     private ChatRoomAdapter chatRoomAdapter;
+    private LinearLayoutManager linearLayoutManager;
 
     @BindView(R.id.tv_head)
     TextView tvHead;
@@ -75,9 +76,9 @@ public class ChatRoomFragment extends Fragment {
 
         Context context = getContext();
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
-        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        recyclerView.setLayoutManager(layoutManager);
+        linearLayoutManager = new LinearLayoutManager(context);
+        linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        recyclerView.setLayoutManager(linearLayoutManager);
         chatRoomAdapter = new ChatRoomAdapter(context, messageBeanList);
         recyclerView.setAdapter(chatRoomAdapter);
 
@@ -146,6 +147,27 @@ public class ChatRoomFragment extends Fragment {
     public void freshMessageList(List<MessageBean> list) {
         this.messageBeanList = list;
         chatRoomAdapter.freshMessageList(list);
+
+        moveToLastPosition();
+    }
+
+    public void moveToLastPosition(/*int position*/) {
+        int position = messageBeanList.size() - 1;
+        int firstItem = linearLayoutManager.findFirstVisibleItemPosition();
+        int lastItem = linearLayoutManager.findLastVisibleItemPosition();
+        Log.d(TAG, "freshMessageList: firstItem=" + firstItem);
+        Log.d(TAG, "freshMessageList: lastItem=" + lastItem);
+        Log.d(TAG, "moveToPosition: positon =" + position);
+
+        if (position <= firstItem) {
+            recyclerView.scrollToPosition(position);
+        } else if (position <= lastItem) {
+            int top = recyclerView.getChildAt(position - firstItem).getTop();
+            recyclerView.scrollBy(0, top);
+        } else {
+            recyclerView.scrollToPosition(position);
+        }
+
     }
 
 }

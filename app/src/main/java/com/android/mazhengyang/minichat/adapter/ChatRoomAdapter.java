@@ -70,21 +70,20 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             return;
         }
 
+        Log.d(TAG, "onBindViewHolder: messageList size=" + messageList.size());
+        Log.d(TAG, "onBindViewHolder: position=" + position);
+
         MessageBean messageBean = messageList.get(position);
         ((UserItemViewHolder) holder).tvTime.setText(messageBean.getSendTime());
         ((UserItemViewHolder) holder).tvMessage.setText(messageBean.getMessage());
 
-        String senderIp = messageBean.getSenderIp();
-        String receiverIp = messageBean.getReceiverIp();
-
-        Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
-        Log.d(TAG, "onBindViewHolder: receiverIp=" + receiverIp);
-
-        if (senderIp.equals(NetUtils.getLocalIpAddress())) {
+        if (messageBean.getSenderDeviceCode()
+                .equals(NetUtils.getDeviceCode(context))) {
             ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
         } else {
             ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
         }
+
     }
 
     @Override
@@ -103,7 +102,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         MessageBean messageBean = messageList.get(position);
 
-        if (messageBean.getSenderIp().equals(NetUtils.getLocalIpAddress())) {
+        if (messageBean.getSenderDeviceCode()
+                .equals(NetUtils.getDeviceCode(context))) {
             return TYPE_SELF;
         } else {
             return TYPE_FRIEND;

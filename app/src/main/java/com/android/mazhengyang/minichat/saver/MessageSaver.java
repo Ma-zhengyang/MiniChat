@@ -30,6 +30,8 @@ public class MessageSaver extends Thread {
     private static final int INITIAL_BUFFER_SIZE = 256;
     private static StringBuffer buffer = new StringBuffer(INITIAL_BUFFER_SIZE);
 
+    private static String directory;
+
     public MessageSaver() {
         mQueue = new ArrayList<>();
         writerList = new ArrayList<>();
@@ -101,61 +103,71 @@ public class MessageSaver extends Thread {
                 PrintWriter printWriter = writer.getPrintWriter();
                 if (printWriter != null) {
                     printWriter.close();
-                    printWriter = null;
                 }
             }
+
         }
     }
 
     public static void store(MessageBean messageBean) {
         // Save the message.
-        Log.d(TAG, "addMessage: start.");
+        Log.d(TAG, "store: start.");
 
-        String deviceCode = messageBean.getKey();
+        String title = messageBean.getKey();
 
         //创建PrintWriter
         PrintWriter printWriter = null;
         for (Writer writer : writerList) {
-            if (deviceCode.equals(writer.getTitle())) {
+            if (title.equals(writer.getTitle())) {
                 printWriter = writer.getPrintWriter();
                 break;
             }
         }
         if (printWriter == null) {
-            printWriter = createPrintWriter(deviceCode);
-            writerList.add(new Writer(deviceCode, printWriter));
+            printWriter = createPrintWriter(title);
+            writerList.add(new Writer(title, printWriter));
         }
 
         //写数据
         if (buffer.length() > 0) {
             buffer.delete(0, buffer.length());
         }
-        buffer.append(messageBean.toString());
+        buffer.append(messageBean.toStoreString());
 
         printWriter.println(buffer.toString());
         printWriter.flush();
 
-        Log.d(TAG, "addMessage: end.");
+        Log.d(TAG, "store: end.");
 
     }
 
-    private static PrintWriter createPrintWriter(String deviceCode) {
+    private static String getDir() {
         String state = Environment.getExternalStorageState();
         if (!state.equals(Environment.MEDIA_MOUNTED)) {
-            Log.d(TAG, "createPrintWriter: not MEDIA_MOUNTED");
+            Log.d(TAG, "createDir: not MEDIA_MOUNTED");
             return null;
         }
 
-        String direcotry = Environment.getExternalStorageDirectory().getAbsolutePath();
-        Log.d(TAG, "createPrintWriter: direcotry=" + direcotry);
+        return Environment.getExternalStorageDirectory()
+                .getAbsolutePath() + "/MiniChat/";
+    }
 
-//        File dir = new File(direcotry);
-//        if (!dir.exists()) {
-//            dir.mkdirs();
-//        }
+    private static PrintWriter createPrintWriter(String title) {
 
-        String title = deviceCode + ".txt";
-        File messageFile = new File(direcotry, title);
+        if (directory == null) {
+            directory = getDir();
+            Log.d(TAG, "createPrintWriter: directory=" + directory);
+        }
+
+        File f = new File(directory);
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+        if (!f.exists()) {
+            return null;
+        }
+
+        File messageFile = new File(directory, title);
         if (!messageFile.exists()) {
             try {
                 if (!messageFile.createNewFile()) {

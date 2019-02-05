@@ -36,9 +36,12 @@ public class ContactAdapter extends BaseAdapter implements
     private Character[] mSectionLetters;
     private LayoutInflater mInflater;
 
+    private Context context;
+
     public ContactAdapter(Context context, List<ContactBean> list) {
         Log.d(TAG, "ContactAdapter: ");
 
+        this.context = context;
         mInflater = LayoutInflater.from(context);
 
         this.list = list;
@@ -155,9 +158,11 @@ public class ContactAdapter extends BaseAdapter implements
         if (user != null) {
             String name = user.getUserName();
             String ip = user.getUserIp();
+            String deviceCode = user.getDeviceCode();
 
             Log.d(TAG, "getView: name=" + name);
             Log.d(TAG, "getView: ip=" + ip);
+            Log.d(TAG, "getView: deviceCode="+deviceCode);
 
             if (user.isOnline()) {
                 holder.tvUserName.setTextColor(Color.BLACK);
@@ -165,7 +170,7 @@ public class ContactAdapter extends BaseAdapter implements
                 holder.tvUserName.setTextColor(Color.GRAY);
             }
 
-            if (ip.equals(NetUtils.getLocalIpAddress())) {
+            if (deviceCode.equals(NetUtils.getDeviceCode(context))) {
                 holder.ivUserIcon.setImageResource(R.drawable.user_self);
                 holder.tvUserName.setText(name);
             } else {

@@ -1,8 +1,11 @@
 package com.android.mazhengyang.minichat.util;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -21,7 +24,7 @@ public class NetUtils {
     private static final String TAG = "MiniChat." + NetUtils.class.getSimpleName();
 
     private static String ip;
-    private static String deviceId;
+    private static String deviceCode;
 
     /**
      * 判断wifi是否连接
@@ -83,14 +86,17 @@ public class NetUtils {
      * @param context
      * @return
      */
-    public static String getDeviceDevice(Context context) {
-        if (deviceId == null) {
+    public static String getDeviceCode(Context context) {
+        if (deviceCode == null) {
             TelephonyManager telephonyManager = (TelephonyManager)
                     context.getSystemService(Context.TELEPHONY_SERVICE);
-            deviceId = telephonyManager.getImei();
-            Log.d(TAG, "getDeviceDevice: deviceId=" + deviceId);
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                deviceCode = telephonyManager.getImei();
+            }
+            Log.d(TAG, "getDeviceCode: deviceCode=" + deviceCode);
         }
-        return deviceId;
+        return deviceCode;
     }
 
 }

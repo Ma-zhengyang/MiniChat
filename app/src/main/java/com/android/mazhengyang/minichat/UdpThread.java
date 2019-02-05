@@ -152,7 +152,7 @@ public class UdpThread extends Thread {
             try {
                 if (isOnline) {
                     send(packUdpMessage(
-                            NetUtils.getDeviceDevice(context),
+                            NetUtils.getDeviceCode(context),
                             Constant.ALL_ADDRESS,
                             "",
                             ACTION_ONLINE).toString(),
@@ -161,7 +161,8 @@ public class UdpThread extends Thread {
 
                     //如果是wifi信号等原因中途断网的，是无法send的，只能把自己设置下线
                     for (ContactBean user : contactList) {
-                        if (user.getUserIp().equals(NetUtils.getLocalIpAddress()) && user.isOnline()) {
+                        if (user.getDeviceCode().equals(NetUtils.getDeviceCode(context))
+                                && user.isOnline()) {
                             user.setOnline(false);
                             freshContact(contactList);
                             break;
@@ -169,7 +170,7 @@ public class UdpThread extends Thread {
                     }
 
                     //正常release方式退出的，能send
-                    send(packUdpMessage(NetUtils.getDeviceDevice(context),
+                    send(packUdpMessage(NetUtils.getDeviceCode(context),
                             Constant.ALL_ADDRESS,
                             "",
                             ACTION_OFFLINE).toString(),
@@ -214,15 +215,11 @@ public class UdpThread extends Thread {
             return;
         }
 
-        String messageString = messageBean.toString();
-        Log.d(TAG, "send: messageString=" + messageString);
-
-        String selfIp = NetUtils.getLocalIpAddress();
-        String receiverIp = messageBean.getReceiverIp();
-
         //自己给自己发消息，处理一次就行
-        if (selfIp.equals(receiverIp)) {
+        if (messageBean.getReceiverDeviceCode()
+                .equals(NetUtils.getDeviceCode(context))) {
             freshMessage(messageBean);
+            Log.d(TAG, "send: self to self.");
             return;
         }
 
@@ -231,7 +228,9 @@ public class UdpThread extends Thread {
 
         //发送给对方
         try {
-            send(messageString, InetAddress.getByName(receiverIp));
+            String messageString = messageBean.toString();
+            Log.d(TAG, "send: messageString=" + messageString);
+            send(messageString, InetAddress.getByName(messageBean.getReceiverIp()));
         } catch (UnknownHostException e) {
             e.printStackTrace();
             Log.e(TAG, "send: " + e);
@@ -283,12 +282,12 @@ public class UdpThread extends Thread {
         messageBean.setSenderName(Build.DEVICE);
         messageBean.setSenderIp(NetUtils.getLocalIpAddress());
         messageBean.setReceiverIp(receiverIp);
-        messageBean.setSenderDeviceCode(NetUtils.getDeviceDevice(context));
+        messageBean.setSenderDeviceCode(NetUtils.getDeviceCode(context));
         messageBean.setReceiverDeviceCode(receiverDeviceCode);
         messageBean.setMessage(message);
         messageBean.setSendTime(DataUtil.formatTime(System.currentTimeMillis()));
         messageBean.setType(type);
-        messageBean.setReaded(false);
+        messageBean.setAlreadyRead(false);
         return messageBean;
     }
 
@@ -308,14 +307,18 @@ public class UdpThread extends Thread {
 
             Log.d(TAG, "handleReceivedMsg: s=" + s);
 
+            String selfDeviceCode = NetUtils.getDeviceCode(context);
+            String senderDeviceCode = messageBean.getSenderDeviceCode();
             String selfIp = NetUtils.getLocalIpAddress();
             String senderIp = datagramPacket.getAddress().getHostAddress();//对方ip。自己给自己发的话这个ip就是自己
+            int type = messageBean.getType();
 
+            Log.d(TAG, "handleReceivedMsg: selfDeviceCode="+selfDeviceCode);
+            Log.d(TAG, "handleReceivedMsg: senderDeviceCode="+senderDeviceCode);
             Log.d(TAG, "handleReceivedMsg: selfIp=" + selfIp);
             Log.d(TAG, "handleReceivedMsg: senderIp=" + senderIp);
-
-            int type = messageBean.getType();
             Log.d(TAG, "handleReceivedMsg: type=" + type);
+            Log.d(TAG, "handleReceivedMsg: ========"+messageBean.getSendTime());
 
             switch (type) {
                 case ACTION_ONLINE: //来自noticeOnline中的群播，每个用户都会收到，包括自己
@@ -341,13 +344,12 @@ public class UdpThread extends Thread {
                         newUser.setUserName(messageBean.getSenderName());
                         newUser.setDeviceCode(messageBean.getSenderDeviceCode());
                         newUser.setOnline(true);
-                        newUser.setSelf(selfIp.equals(senderIp));
                         contactList.add(newUser);
                     }
 
                     //自己上线后，对方接收到ACTION_ONLINE后执行这里，这样就会把对方加入到自己列表
-                    if (!selfIp.equals(senderIp)) {
-                        send(packUdpMessage(NetUtils.getDeviceDevice(context),
+                    if (!selfDeviceCode.equals(senderDeviceCode)) {
+                        send(packUdpMessage(NetUtils.getDeviceCode(context),
                                 Constant.ALL_ADDRESS,
                                 "",
                                 ACTION_ONLINED).toString(),
@@ -417,24 +419,24 @@ public class UdpThread extends Thread {
     private void freshMessage(MessageBean messageBean) {
         Log.d(TAG, "freshMessage: start");
 
-        String senderIp = messageBean.getSenderIp();
-        String receiverIp = messageBean.getReceiverIp();
-        String selfIp = NetUtils.getLocalIpAddress();
+//        String senderIp = messageBean.getSenderIp();
+//        String receiverIp = messageBean.getReceiverIp();
 
         String senderDeviceCode = messageBean.getSenderDeviceCode();
         String receiverDeviceCode = messageBean.getReceiverDeviceCode();
+        String selfDeviceCode = NetUtils.getDeviceCode(context);
 
         ContactBean whoSend = null;//这条消息是谁发来的
         ContactBean whoReceiver = null;//这条消息是谁接收的
         for (ContactBean userBean : contactList) {
             if (whoSend == null) {
-                if (userBean.getUserIp().equals(senderIp)) {
+                if (userBean.getDeviceCode().equals(senderDeviceCode)) {
                     whoSend = userBean;
                     Log.d(TAG, "freshMessage: whoSend=" + whoSend.getUserName());
                 }
             }
             if (whoReceiver == null) {
-                if (userBean.getUserIp().equals(receiverIp)) {
+                if (userBean.getDeviceCode().equals(receiverDeviceCode)) {
                     whoReceiver = userBean;
                     Log.d(TAG, "freshMessage: whoReceiver=" + whoReceiver.getUserName());
                 }
@@ -445,25 +447,10 @@ public class UdpThread extends Thread {
         }
 
         //把消息存入列表
-//        String key;
-//        if (senderIp.equals(selfIp)) {//我发给对方的,key是receiverIp
-//            key = receiverIp;
-//        } else {//对方发给我的,key是senderIp
-//            key = senderIp;
-//        }
-//        if (messageList.containsKey(key)) {
-//            List<MessageBean> list = messageList.get(key);
-//            list.add(messageBean);
-//        } else {
-//            List<MessageBean> list = new ArrayList<>();
-//            list.add(messageBean);
-//            messageList.put(key, list);
-//        }
-
         String key;
-        if (senderIp.equals(selfIp)) {//我发给对方的,receiverDeviceCode
+        if (senderDeviceCode.equals(selfDeviceCode)) {//我发给对方的,key是receiverDeviceCode
             key = receiverDeviceCode;
-        } else {//对方发给我的,key是senderIp
+        } else {//对方发给我的,senderDeviceCode
             key = senderDeviceCode;
         }
         if (messageListMap.containsKey(key)) {
@@ -476,17 +463,17 @@ public class UdpThread extends Thread {
         }
 
         messageBean.setKey(key);
-        //保存消息
+        //保存消息到文件
         messageSaver.addMessage(messageBean);
 
         if (chattingUser != null) {//正在聊天界面
             Log.d(TAG, "freshMessage: current is in chatRoomFragment");
 
-            if (chattingUser.getUserIp().equals(selfIp)) { //当前聊天界面用户对象就是自己
+            if (chattingUser.getDeviceCode().equals(selfDeviceCode)) { //当前聊天界面用户对象就是自己
                 Log.d(TAG, "freshMessage: current chat view is self");
-                if (senderIp.equals(receiverIp)) {//自己和自己发消息，无需设置未读
+                if (senderDeviceCode.equals(receiverDeviceCode)) {//自己和自己发消息，无需设置未读
                     Log.d(TAG, "freshMessage: message send by self");
-                    messageBean.setReaded(true);
+                    messageBean.setAlreadyRead(true);
                     if (listener != null) {
                         listener.freshMessage(messageListMap, false, false);
                     }
@@ -504,10 +491,10 @@ public class UdpThread extends Thread {
                 whoSend.setRecentMsg(messageBean.getMessage());
                 whoSend.setRecentTime(messageBean.getSendTime());
             } else {//当前正在和朋友聊天
-                String ip = chattingUser.getUserIp();
+                String deviceCode = chattingUser.getDeviceCode();//对方deviceCode
                 //消息是当前正在聊天的朋友发的，不需处理
-                if (ip.equals(senderIp)) {//对方发消息时
-                    messageBean.setReaded(true);
+                if (deviceCode.equals(senderDeviceCode)) {//对方发消息时
+                    messageBean.setAlreadyRead(true);
                     if (!chattedContactList.contains(whoSend)) {
                         chattedContactList.add(whoSend);
                     }
@@ -516,8 +503,8 @@ public class UdpThread extends Thread {
                     }
                     whoSend.setRecentMsg(messageBean.getMessage());
                     whoSend.setRecentTime(messageBean.getSendTime());
-                } else if (ip.equals(receiverIp)) {//自己发消息时
-                    messageBean.setReaded(true);
+                } else if (deviceCode.equals(receiverDeviceCode)) {//自己发消息时
+                    messageBean.setAlreadyRead(true);
                     if (!chattedContactList.contains(whoReceiver)) {
                         chattedContactList.add(whoReceiver);
                     }

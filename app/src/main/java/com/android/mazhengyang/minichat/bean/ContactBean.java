@@ -12,7 +12,6 @@ public class ContactBean implements Serializable {
     private String userIp; //ip地址
     private String deviceCode; //手机设备码
     private boolean isOnline; //是否在线
-    private boolean isSelf; //是否是自己
     private int unReadMsgCount = 0; //未读消息数
     private String recentMsg; //最近一条消息
     private String recentTime; //最近一条消息时间
@@ -47,14 +46,6 @@ public class ContactBean implements Serializable {
 
     public void setOnline(boolean online) {
         isOnline = online;
-    }
-
-    public boolean isSelf() {
-        return isSelf;
-    }
-
-    public void setSelf(boolean self) {
-        isSelf = self;
     }
 
     public int getUnReadMsgCount() {

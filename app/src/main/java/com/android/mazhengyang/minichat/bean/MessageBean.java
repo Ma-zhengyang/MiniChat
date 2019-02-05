@@ -23,7 +23,7 @@ public class MessageBean {
     private String message; //信息内容
     private String sendTime; //发送时间 TODO, 这里显示的是本机时间，并不是对方的时间，可能错乱的
     private int type;//当前消息的类型
-    private boolean readed = false;//消息是否已读
+    private boolean alreadyRead = false;//消息是否已读
     private String key;//消息归属标识，值是自己或对方imei码，用来标识这条消息归属到哪一个聊天历史人中去
 
     public MessageBean() {
@@ -40,8 +40,8 @@ public class MessageBean {
             message = Base64Util.decrypt(object.getString("message"));
             type = object.getInt("type");
             sendTime = object.getString("sendTime");
-            readed = object.getBoolean("readed");
-            sendTime = object.getString("key");
+            alreadyRead = object.getBoolean("alreadyRead");
+            key = object.getString("key");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -61,8 +61,26 @@ public class MessageBean {
             object.put("message", Base64Util.encrypt(message));
             object.put("type", type);
             object.put("sendTime", sendTime);
-            object.put("readed", readed);
+            object.put("alreadyRead", alreadyRead);
             object.put("key", key);
+            return object.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    /**
+     * 保存的格式
+     *
+     * @return
+     */
+    public String toStoreString() {
+        try {
+            JSONObject object = new JSONObject();
+            object.put("senderDeviceCode", senderDeviceCode);
+            object.put("message", Base64Util.encrypt(message));
+            object.put("sendTime", sendTime);
             return object.toString();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -135,12 +153,12 @@ public class MessageBean {
         this.type = type;
     }
 
-    public boolean isReaded() {
-        return readed;
+    public boolean isAlreadyRead() {
+        return alreadyRead;
     }
 
-    public void setReaded(boolean readed) {
-        this.readed = readed;
+    public void setAlreadyRead(boolean alreadyRead) {
+        this.alreadyRead = alreadyRead;
     }
 
     public String getKey() {

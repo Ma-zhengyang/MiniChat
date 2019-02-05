@@ -58,7 +58,7 @@ public class SettingFragment extends Fragment {
         Context context = getContext();
 
         tvUserNickName.setText("");
-        ivUserHead.setImageResource(R.drawable.user_friend);
+        ivUserHead.setImageResource(R.drawable.user_self);
 
         //sound
         if (SharedPreferencesHelper.getSoundMode(context)

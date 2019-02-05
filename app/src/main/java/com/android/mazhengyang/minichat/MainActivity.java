@@ -51,12 +51,10 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
     private static final String TAG = "MiniChat." + MainActivity.class.getSimpleName();
 
-    private static final int PERMISSIONS_REQUEST_READ_PHONE_STATE = 1024;
-    private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1025;
-
-    public static final int MESSAGE_FRESH_CONTACT = 1024;
-    public static final int MESSAGE_FRESH_MESSAGE = 1025;
-    public static final int MESSAGE_FRESH_CHATTED = 1026;
+    public static final int MESSAGE_FRESH_CONTACT = 1024;//刷新联系人列表
+    public static final int MESSAGE_FRESH_MESSAGE = 1025;//刷新聊天消息
+    public static final int MESSAGE_FRESH_CHATTED = 1026;//刷新聊过天的用户列表
+    public static final int MESSAGE_FRESH_MESSAGE_POSITION = 1027;//刷新消息位置
 
     private static final int INDEX_CHAT_HISTORY = 0;
     private static final int INDEX_USERLIST = 1;
@@ -94,8 +92,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         requestPermissions();
-
-        NetUtils.resetLocalIpAddress();
 
         initView();
         initVibrateSound();
@@ -137,10 +133,11 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         udpThread.release();
         mainHandler.removeCallbacksAndMessages(null);
+        NetUtils.resetLocalIpAddress();
+        DayNightController.onDestory();
         if (netWorkStateReceiver != null) {
             unregisterReceiver(netWorkStateReceiver);
         }
-        DayNightController.onDestory();
     }
 
     private void start() {
@@ -406,6 +403,12 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                         chatHistoryFragment.updateChattedUserList(chattedContactList);
                     }
                     break;
+                case MESSAGE_FRESH_MESSAGE_POSITION:
+                    Log.d(TAG, "handleMessage: MESSAGE_FRESH_MESSAGE_POSITION");
+                    if (currentFragment == chatRoomFragment) {
+                        chatRoomFragment.moveToLastPosition();
+                    }
+                    break;
                 default:
                     break;
             }
@@ -441,6 +444,10 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         this.messageListMap = listMap;
         mainHandler.sendEmptyMessage(MESSAGE_FRESH_MESSAGE);
+
+        //recycleView跳到最后一条消息位置，不确定界面何时显示结束，提早跳转会位置不对//TODO
+        mainHandler.removeMessages(MESSAGE_FRESH_MESSAGE_POSITION);
+        mainHandler.sendEmptyMessageDelayed(MESSAGE_FRESH_MESSAGE_POSITION, 500);
     }
 
     /**
@@ -466,12 +473,12 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         chatRoomFragment.setUserBean(user);
         if (messageListMap != null) {
-            chatRoomFragment.setMessageBeanList(messageListMap.get(user.getUserIp()));
+            chatRoomFragment.setMessageBeanList(messageListMap.get(user.getDeviceCode()));
         }
         showFragment(chatRoomFragment);
         udpThread.setChattingUser(user);
 
-        if (!user.getUserIp().equals(NetUtils.getLocalIpAddress())) {
+        if (!user.getDeviceCode().equals(NetUtils.getDeviceCode(this))) {
             user.setUnReadMsgCount(0);
             updateUnReadIndicator();
         }

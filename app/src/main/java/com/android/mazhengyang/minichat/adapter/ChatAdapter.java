@@ -68,21 +68,19 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         }
 
-        ContactBean userBean = chattedContactList.get(position);
+        ContactBean contactBean = chattedContactList.get(position);
 
-        String senderIp = userBean.getUserIp();
-        Log.d(TAG, "onBindViewHolder: senderIp=" + senderIp);
-
-        if (senderIp.equals(NetUtils.getLocalIpAddress())) {
+        if (contactBean.getDeviceCode()
+                .equals(NetUtils.getDeviceCode(context))) {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
         } else {
             ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
         }
 
-        ((ChatedUserItemViewHolder) holder).bvUnReadMsgCount.setBadgeCount(userBean.getUnReadMsgCount());
-        ((ChatedUserItemViewHolder) holder).tvUserName.setText(userBean.getUserName());
-        ((ChatedUserItemViewHolder) holder).tvRecentMessage.setText(userBean.getRecentMsg());
-        ((ChatedUserItemViewHolder) holder).tvRecentTime.setText(userBean.getRecentTime());
+        ((ChatedUserItemViewHolder) holder).bvUnReadMsgCount.setBadgeCount(contactBean.getUnReadMsgCount());
+        ((ChatedUserItemViewHolder) holder).tvUserName.setText(contactBean.getUserName());
+        ((ChatedUserItemViewHolder) holder).tvRecentMessage.setText(contactBean.getRecentMsg());
+        ((ChatedUserItemViewHolder) holder).tvRecentTime.setText(contactBean.getRecentTime());
 
     }
 
