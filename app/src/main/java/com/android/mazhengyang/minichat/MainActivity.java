@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.mazhengyang.minichat.bean.BaseBean;
 import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.bean.MessageBean;
 import com.android.mazhengyang.minichat.fragment.ChatFragment;
@@ -73,13 +74,13 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private MessageSaver messageSaver;
 
     private ChatFragment chatHistoryFragment;
-    private ContactFragment userListFragment;
+    private ContactFragment contactFragment;
     private SettingFragment settingFragment;
     private ChatRoomFragment chatRoomFragment;
     private Fragment currentFragment;
 
     //在UdpThread中实现
-    private List<ContactBean> contactList;
+    private List<BaseBean> contactList;
     private List<ContactBean> chattedContactList;
     private Map<String, List<MessageBean>> messageListMap;
 
@@ -105,9 +106,9 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         udpThread.setSocketCallback(this);
         messageSaver = new MessageSaver();
 
-        userListFragment = new ContactFragment();
-        userListFragment.setContactCallback(this);
-        showFragment(userListFragment);
+        contactFragment = new ContactFragment();
+        contactFragment.setContactCallback(this);
+        showFragment(contactFragment);
     }
 
     @Override
@@ -194,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                     showFragment(chatHistoryFragment);
                     break;
                 case INDEX_USERLIST:
-                    showFragment(userListFragment);
+                    showFragment(contactFragment);
                     break;
                 case INDEX_ME:
                     showFragment(settingFragment);
@@ -259,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
         tabLayout.addTab(chatHistoryTab, INDEX_CHAT_HISTORY);
 
         TabLayout.Tab userListTab = tabLayout.newTab();
-        userListTab.setCustomView(makeTabView(R.drawable.tab_contact_list, R.string.tab_userlist, false));
+        userListTab.setCustomView(makeTabView(R.drawable.tab_contact_list, R.string.tab_contactlist, false));
         tabLayout.addTab(userListTab, INDEX_USERLIST);
 
         TabLayout.Tab selfTab = tabLayout.newTab();
@@ -287,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                         showFragment(chatHistoryFragment);
                         break;
                     case INDEX_USERLIST:
-                        showFragment(userListFragment);
+                        showFragment(contactFragment);
                         break;
                     case INDEX_ME:
                         if (settingFragment == null) {
@@ -338,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             if (fragment == chatHistoryFragment) {
                 tabLayout.getTabAt(INDEX_CHAT_HISTORY).select();
                 indexCurrent = INDEX_CHAT_HISTORY;
-            } else if (fragment == userListFragment) {
+            } else if (fragment == contactFragment) {
                 tabLayout.getTabAt(INDEX_USERLIST).select();
                 indexCurrent = INDEX_USERLIST;
             } else if (fragment == settingFragment) {
@@ -352,7 +353,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             } else {
                 udpThread.setChattingUser(null);
             }
-
         }
     }
 
@@ -382,8 +382,8 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
             switch (msg.what) {
                 case MESSAGE_FRESH_CONTACT:
                     Log.d(TAG, "handleMessage: MESSAGE_FRESH_CONTACT");
-                    if (userListFragment != null) {
-                        userListFragment.freshContact(contactList);
+                    if (contactFragment != null) {
+                        contactFragment.freshContact(contactList);
                     }
                     break;
                 case MESSAGE_FRESH_MESSAGE:
@@ -421,7 +421,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * @param contactList
      */
     @Override
-    public void freshContact(List<ContactBean> contactList) {
+    public void freshContact(List<BaseBean> contactList) {
         this.contactList = contactList;
         mainHandler.sendEmptyMessage(MESSAGE_FRESH_CONTACT);
     }
@@ -462,26 +462,33 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     }
 
     /**
-     * @param user
+     * @param bean
      */
     @Override
-    public void onUserItemClick(ContactBean user) {
+    public void onUserItemClick(BaseBean bean) {
 
-        if (chatRoomFragment == null) {
-            chatRoomFragment = new ChatRoomFragment();
+        Log.d(TAG, "onUserItemClick: bean=" + bean);
+
+        if (bean instanceof ContactBean) {
+            ContactBean contactBean = (ContactBean) bean;
+
+            if (chatRoomFragment == null) {
+                chatRoomFragment = new ChatRoomFragment();
+            }
+
+            chatRoomFragment.setUserBean(contactBean);
+            if (messageListMap != null) {
+                chatRoomFragment.setMessageBeanList(messageListMap.get(contactBean.getDeviceCode()));
+            }
+            showFragment(chatRoomFragment);
+            udpThread.setChattingUser(contactBean);
+
+            if (!contactBean.getDeviceCode().equals(NetUtils.getDeviceCode(this))) {
+                contactBean.setUnReadMsgCount(0);
+                updateUnReadIndicator();
+            }
         }
 
-        chatRoomFragment.setUserBean(user);
-        if (messageListMap != null) {
-            chatRoomFragment.setMessageBeanList(messageListMap.get(user.getDeviceCode()));
-        }
-        showFragment(chatRoomFragment);
-        udpThread.setChattingUser(user);
-
-        if (!user.getDeviceCode().equals(NetUtils.getDeviceCode(this))) {
-            user.setUnReadMsgCount(0);
-            updateUnReadIndicator();
-        }
     }
 
     /**
@@ -490,8 +497,8 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private void updateUnReadIndicator() {
         int total = 0;
         if (chattedContactList != null) {
-            for (ContactBean userBean : chattedContactList) {
-                total += userBean.getUnReadMsgCount();
+            for (ContactBean contactBean : chattedContactList) {
+                total += contactBean.getUnReadMsgCount();
             }
         }
         badgeView.setBadgeCount(total);

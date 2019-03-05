@@ -35,7 +35,7 @@ public class ChatRoomFragment extends Fragment {
 
     private static final String TAG = "MiniChat." + ChatRoomFragment.class.getSimpleName();
 
-    private ContactBean userBean;
+    private ContactBean contactBean;
     private List<MessageBean> messageBeanList;
     private ChatRoomAdapter chatRoomAdapter;
     private LinearLayoutManager linearLayoutManager;
@@ -49,9 +49,9 @@ public class ChatRoomFragment extends Fragment {
     @BindView(R.id.chatroom_sendbtn)
     Button sendBtn;
 
-    public void setUserBean(ContactBean userBean) {
+    public void setUserBean(ContactBean contactBean) {
         Log.d(TAG, "setUserBean: ");
-        this.userBean = userBean;
+        this.contactBean = contactBean;
     }
 
     public void setMessageBeanList(List<MessageBean> messageBeanList) {
@@ -72,7 +72,7 @@ public class ChatRoomFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_chatroom, null);
         ButterKnife.bind(this, view);
 
-        tvHead.setText(userBean.getUserName());
+        tvHead.setText(contactBean.getUserName());
 
         Context context = getContext();
 
@@ -124,8 +124,8 @@ public class ChatRoomFragment extends Fragment {
         @Override
         public void onClick(View v) {
 
-            String receiverIp = userBean.getUserIp();
-            String receiverDeviceCode = userBean.getDeviceCode();
+            String receiverIp = contactBean.getUserIp();
+            String receiverDeviceCode = contactBean.getDeviceCode();
             String message = editText.getText().toString().trim();
 
             Log.d(TAG, "onClick: receiverIp=" + receiverIp);

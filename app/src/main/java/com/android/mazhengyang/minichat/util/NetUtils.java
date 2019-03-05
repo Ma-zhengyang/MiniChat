@@ -14,6 +14,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.Random;
 
 /**
  * Created by mazhengyang on 19-1-16.
@@ -93,6 +94,11 @@ public class NetUtils {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
                     == PackageManager.PERMISSION_GRANTED) {
                 deviceCode = telephonyManager.getImei();
+            }
+            if (deviceCode == null) {
+                //只能做测试用
+                Random random = new Random();
+                deviceCode = String.valueOf(random.nextInt());
             }
             Log.d(TAG, "getDeviceCode: deviceCode=" + deviceCode);
         }

@@ -1,28 +1,17 @@
 package com.android.mazhengyang.minichat.bean;
 
-import java.io.Serializable;
-
 /**
  * Created by mazhengyang on 18-11-27.
  */
 
-public class ContactBean implements Serializable {
+public class ContactBean extends BaseBean {
 
-    private String userName; //用户名
     private String userIp; //ip地址
     private String deviceCode; //手机设备码
     private boolean isOnline; //是否在线
     private int unReadMsgCount = 0; //未读消息数
     private String recentMsg; //最近一条消息
     private String recentTime; //最近一条消息时间
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
 
     public String getUserIp() {
         return userIp;
@@ -71,4 +60,5 @@ public class ContactBean implements Serializable {
     public void setRecentTime(String recentTime) {
         this.recentTime = recentTime;
     }
+
 }

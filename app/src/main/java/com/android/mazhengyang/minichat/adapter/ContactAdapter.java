@@ -2,257 +2,178 @@ package com.android.mazhengyang.minichat.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.android.mazhengyang.minichat.R;
+import com.android.mazhengyang.minichat.bean.BaseBean;
 import com.android.mazhengyang.minichat.bean.ContactBean;
+import com.android.mazhengyang.minichat.bean.HeaderBean;
 import com.android.mazhengyang.minichat.util.NetUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by mazhengyang on 18-11-27.
  */
 
-public class ContactAdapter extends BaseAdapter implements
-        StickyListHeadersAdapter, SectionIndexer {
+public class ContactAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final String TAG = "MiniChat." + ContactAdapter.class.getSimpleName();
 
-    private List<ContactBean> list;
-
-    private List<String> mNameList = new ArrayList<>(20);//暂最多20个好友
-    private int[] mSectionIndices;
-    private Character[] mSectionLetters;
-    private LayoutInflater mInflater;
+    private static final int TYPE_HEAD = 0;
+    private static final int TYPE_CONTACT = 1;
 
     private Context context;
+    private List<BaseBean> list;
 
-    public ContactAdapter(Context context, List<ContactBean> list) {
+    public ContactAdapter(Context context, List<BaseBean> list) {
         Log.d(TAG, "ContactAdapter: ");
-
         this.context = context;
-        mInflater = LayoutInflater.from(context);
-
         this.list = list;
-        formatList();
     }
 
-    public void freshContact(List<ContactBean> list) {
-        Log.d(TAG, "freshContact: ");
+    private OnContactItemClickListener onContactItemClickListener;
 
+    public interface OnContactItemClickListener {
+        void OnContactItemClick(BaseBean bean);
+    }
+
+    public void setOnContactItemClickListener(OnContactItemClickListener listener) {
+        this.onContactItemClickListener = listener;
+    }
+
+    public void freshContact(List<BaseBean> list) {
+        if (list != null) {
+            Log.d(TAG, "freshContact: list size=" + list.size());
+//            for (int i = 0; i < list.size(); i++) {
+//                ContactBean contactBean = list.get(i);
+//                Log.d(TAG, "freshContact: i=" + i + "," + contactBean.getUserName());
+//            }
+        } else {
+            Log.d(TAG, "freshContact: list is null");
+        }
         this.list = list;
-        formatList();
         this.notifyDataSetChanged();
     }
 
-    private void formatList() {
-
-        if (list != null && list.size() > 0) {
-            Log.d(TAG, "formatList: list size=" + list.size());
-            mNameList.clear();
-
-            for (int i = 0; i < list.size(); i++) {
-                String name = list.get(i).getUserName();
-                mNameList.add(i, name);
-            }
-
-            mSectionIndices = getSectionIndices();
-            mSectionLetters = getSectionLetters();
-
-            Log.d(TAG, "formatList: mSectionIndices=" + mSectionIndices.length);
-            for (int i = 0; i < mSectionIndices.length; i++) {
-                Log.d(TAG, "formatList: mSectionIndices[" + i + "]=" + mSectionIndices[i]);
-            }
-            Log.d(TAG, "formatList: mSectionLetters=" + mSectionLetters.length);
-            for (int i = 0; i < mSectionLetters.length; i++) {
-                Log.d(TAG, "formatList: mSectionLetters[" + i + "]=" + mSectionLetters[i]);
-            }
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        Log.d(TAG, "onCreateViewHolder: ");
+        if (viewType == TYPE_HEAD) {
+            View v = LayoutInflater.from(context)
+                    .inflate(R.layout.item_contact_head, parent, false);
+            HeadViewHolder vh = new HeadViewHolder(v);
+            return vh;
+        } else {
+            View v = LayoutInflater.from(context)
+                    .inflate(R.layout.item_contact, parent, false);
+            ViewHolder vh = new ViewHolder(v);
+            return vh;
         }
-    }
-
-    private int[] getSectionIndices() {
-        Log.d(TAG, "getSectionIndices: ");
-        ArrayList<Integer> sectionIndices = new ArrayList<>();
-        char lastFirstChar = mNameList.get(0).charAt(0);
-        sectionIndices.add(0);
-        for (int i = 1; i < mNameList.size(); i++) {
-            if (mNameList.get(i).charAt(0) != lastFirstChar) {
-                lastFirstChar = mNameList.get(i).charAt(0);
-                sectionIndices.add(i);
-            }
-        }
-        int[] sections = new int[sectionIndices.size()];
-        for (int i = 0; i < sectionIndices.size(); i++) {
-            sections[i] = sectionIndices.get(i);
-        }
-        return sections;
-    }
-
-    private Character[] getSectionLetters() {
-        Log.d(TAG, "getSectionLetters: ");
-        Character[] letters = new Character[mSectionIndices.length];
-        for (int i = 0; i < mSectionIndices.length; i++) {
-            letters[i] = mNameList.get(mSectionIndices[i]).charAt(0);
-        }
-        return letters;
     }
 
     @Override
-    public int getCount() {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (list == null) {
-            Log.d(TAG, "getCount: list is null");
+            Log.d(TAG, "onBindViewHolder: list is null");
+            return;
+        }
+
+        BaseBean bean = list.get(position);
+        // Log.d(TAG, "onBindViewHolder: position=" + position + ", " + bean + ", " + bean.getSortLetter());
+
+        if (bean instanceof HeaderBean) {
+            ((HeadViewHolder) holder).tvLetter.setText(bean.getSortLetter());
+        } else {
+            ContactBean contactBean = (ContactBean) bean;
+            String name = contactBean.getUserName();
+            String ip = contactBean.getUserIp();
+            String deviceCode = contactBean.getDeviceCode();
+
+            if (contactBean.isOnline()) {
+                ((ViewHolder) holder).tvUserName.setTextColor(Color.BLACK);
+            } else {
+                ((ViewHolder) holder).tvUserName.setTextColor(Color.GRAY);
+            }
+            if (deviceCode.equals(NetUtils.getDeviceCode(context))) {
+                ((ViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
+                ((ViewHolder) holder).tvUserName.setText(name);
+            } else {
+                ((ViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
+                ((ViewHolder) holder).tvUserName.setText(name);
+            }
+            ((ViewHolder) holder).tvUserIp.setText(ip);
+        }
+
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        BaseBean bean = list.get(position);
+        //  Log.d(TAG, "getItemViewType: position=" + position + ", " + bean);
+        if (bean instanceof HeaderBean) {
+            //      Log.d(TAG, "getItemViewType: TYPE_HEAD");
+            return TYPE_HEAD;
+        } else {
+            //   Log.d(TAG, "getItemViewType: TYPE_CONTACT");
+            return TYPE_CONTACT;
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        if (list == null) {
+            Log.d(TAG, "getItemCount: list is null");
             return 0;
         }
         return list.size();
     }
 
-    @Override
-    public Object getItem(int position) {
-        if (list == null) {
-            Log.d(TAG, "getItem: list is null");
-            return null;
+    public class HeadViewHolder extends RecyclerView.ViewHolder {
+
+        @BindView(R.id.tvLetter)
+        TextView tvLetter;
+
+        public HeadViewHolder(View itemView) {
+            super(itemView);
+            ButterKnife.bind(this, itemView);
         }
-        return list.get(position);
     }
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
+    public class ViewHolder extends RecyclerView.ViewHolder implements
+            View.OnClickListener {
 
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        if (list == null) {
-            Log.d(TAG, "getView: list is null");
-            return null;
-        }
-
-        ViewHolder holder;
-
-        if (convertView == null) {
-            holder = new ViewHolder();
-            convertView = mInflater.inflate(R.layout.item_contact, parent, false);
-            holder.ivUserIcon = convertView.findViewById(R.id.ivUserIcon);
-            holder.tvUserName = convertView.findViewById(R.id.tvUserName);
-            holder.tvUserIp = convertView.findViewById(R.id.tvUserIp);
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-        }
-
-        ContactBean user = list.get(position);
-//        Log.d(TAG, "getView: user=" + user);
-
-        if (user != null) {
-            String name = user.getUserName();
-            String ip = user.getUserIp();
-            String deviceCode = user.getDeviceCode();
-
-            Log.d(TAG, "getView: name=" + name);
-            Log.d(TAG, "getView: ip=" + ip);
-            Log.d(TAG, "getView: deviceCode="+deviceCode);
-
-            if (user.isOnline()) {
-                holder.tvUserName.setTextColor(Color.BLACK);
-            } else {
-                holder.tvUserName.setTextColor(Color.GRAY);
-            }
-
-            if (deviceCode.equals(NetUtils.getDeviceCode(context))) {
-                holder.ivUserIcon.setImageResource(R.drawable.user_self);
-                holder.tvUserName.setText(name);
-            } else {
-                holder.ivUserIcon.setImageResource(R.drawable.user_friend);
-                holder.tvUserName.setText(name);
-            }
-            holder.tvUserIp.setText(ip);
-        }
-
-        return convertView;
-    }
-
-    @Override
-    public View getHeaderView(int position, View convertView, ViewGroup parent) {
-
-        if (list == null) {
-            Log.d(TAG, "onBindViewHolder: list is null");
-            return null;
-        }
-
-        HeaderViewHolder holder;
-
-        if (convertView == null) {
-            holder = new HeaderViewHolder();
-            convertView = mInflater.inflate(R.layout.header, parent, false);
-            holder.headerText = convertView.findViewById(R.id.text1);
-            convertView.setTag(holder);
-        } else {
-            holder = (HeaderViewHolder) convertView.getTag();
-        }
-
-        // set header text as first char in name
-        String s = mNameList.get(mSectionIndices[position]).toUpperCase();
-        if (s.length() > 1) {
-            CharSequence headerChar = s.subSequence(0, 1);
-            holder.headerText.setText(headerChar);
-        }
-
-        return convertView;
-    }
-
-    @Override
-    public long getHeaderId(int position) {
-        return mNameList.get(position).subSequence(0, 1).charAt(0);
-    }
-
-    @Override
-    public Object[] getSections() {
-        return mSectionLetters;
-    }
-
-    @Override
-    public int getPositionForSection(int sectionIndex) {
-        if (mSectionIndices.length == 0) {
-            return 0;
-        }
-
-        if (sectionIndex >= mSectionIndices.length) {
-            sectionIndex = mSectionIndices.length - 1;
-        } else if (sectionIndex < 0) {
-            sectionIndex = 0;
-        }
-        return mSectionIndices[sectionIndex];
-    }
-
-    @Override
-    public int getSectionForPosition(int position) {
-        for (int i = 0; i < mSectionIndices.length; i++) {
-            if (position < mSectionIndices[i]) {
-                return i - 1;
-            }
-        }
-        return mSectionIndices.length - 1;
-    }
-
-    class HeaderViewHolder {
-        TextView headerText;
-    }
-
-    class ViewHolder {
+        @BindView(R.id.ivUserIcon)
         ImageView ivUserIcon;
+        @BindView(R.id.tvUserName)
         TextView tvUserName;
+        @BindView(R.id.tvUserIp)
         TextView tvUserIp;
+
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            ButterKnife.bind(this, itemView);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (onContactItemClickListener != null) {
+                int position = this.getPosition();
+                onContactItemClickListener.OnContactItemClick(list.get(position));
+            }
+        }
+
     }
+
 }

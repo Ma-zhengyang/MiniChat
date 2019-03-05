@@ -8,15 +8,38 @@
 
     <include layout="@layout/title_layout" />
 
-    <se.emilsjolander.stickylistheaders.StickyListHeadersListView
-        android:id="@+id/stickyListHeadersListView"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:drawSelectorOnTop="true"
-        android:fastScrollEnabled="true"
-        android:overScrollMode="never"
-        android:padding="5dp"
-        android:scrollbarStyle="outsideOverlay" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:drawSelectorOnTop="true"
+            android:fastScrollEnabled="true"
+            android:overScrollMode="never"
+            android:scrollbarStyle="outsideOverlay" />
+
+        <TextView
+            android:id="@+id/letterToastView"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:background="@drawable/letter_toast_bg"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="30sp"
+            android:visibility="invisible" />
+
+        <com.android.mazhengyang.minichat.widget.SideBar
+            android:id="@+id/sidebar"
+            android:layout_width="30.0dip"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|center" />
+
+    </FrameLayout>
+
 
 </LinearLayout>
