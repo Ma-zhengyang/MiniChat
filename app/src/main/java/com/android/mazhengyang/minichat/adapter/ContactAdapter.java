@@ -100,18 +100,18 @@ public class ContactAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             String deviceCode = contactBean.getDeviceCode();
 
             if (contactBean.isOnline()) {
-                ((ViewHolder) holder).tvUserName.setTextColor(Color.BLACK);
+                ((ViewHolder) holder).tvContactName.setTextColor(Color.BLACK);
             } else {
-                ((ViewHolder) holder).tvUserName.setTextColor(Color.GRAY);
+                ((ViewHolder) holder).tvContactName.setTextColor(Color.GRAY);
             }
             if (deviceCode.equals(NetUtils.getDeviceCode(context))) {
-                ((ViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
-                ((ViewHolder) holder).tvUserName.setText(name);
+                ((ViewHolder) holder).ivContactIcon.setImageResource(R.drawable.user_self);
+                ((ViewHolder) holder).tvContactName.setText(name);
             } else {
-                ((ViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
-                ((ViewHolder) holder).tvUserName.setText(name);
+                ((ViewHolder) holder).ivContactIcon.setImageResource(R.drawable.user_friend);
+                ((ViewHolder) holder).tvContactName.setText(name);
             }
-            ((ViewHolder) holder).tvUserIp.setText(ip);
+            ((ViewHolder) holder).tvContactIp.setText(ip);
         }
 
     }
@@ -152,12 +152,12 @@ public class ContactAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public class ViewHolder extends RecyclerView.ViewHolder implements
             View.OnClickListener {
 
-        @BindView(R.id.ivUserIcon)
-        ImageView ivUserIcon;
-        @BindView(R.id.tvUserName)
-        TextView tvUserName;
-        @BindView(R.id.tvUserIp)
-        TextView tvUserIp;
+        @BindView(R.id.ivContactIcon)
+        ImageView ivContactIcon;
+        @BindView(R.id.tvContactName)
+        TextView tvContactName;
+        @BindView(R.id.tvContactIp)
+        TextView tvContactIp;
 
 
         public ViewHolder(View itemView) {

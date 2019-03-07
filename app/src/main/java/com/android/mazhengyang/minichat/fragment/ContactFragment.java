@@ -135,7 +135,7 @@ public class ContactFragment extends Fragment implements
     @Override
     public void OnContactItemClick(BaseBean bean) {
         if (contactCallback != null) {
-            contactCallback.onUserItemClick(bean);
+            contactCallback.onContactItemClick(bean);
         }
     }
 

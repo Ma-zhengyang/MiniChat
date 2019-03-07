@@ -34,7 +34,6 @@ import com.android.mazhengyang.minichat.model.IContactCallback;
 import com.android.mazhengyang.minichat.model.ISocketCallback;
 import com.android.mazhengyang.minichat.permissions.PermissionsManager;
 import com.android.mazhengyang.minichat.permissions.PermissionsResultAction;
-import com.android.mazhengyang.minichat.saver.MessageSaver;
 import com.android.mazhengyang.minichat.util.DayNightController;
 import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.util.SharedPreferencesHelper;
@@ -58,9 +57,9 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     public static final int MESSAGE_FRESH_MESSAGE_POSITION = 1027;//刷新消息位置
 
     private static final int INDEX_CHAT_HISTORY = 0;
-    private static final int INDEX_USERLIST = 1;
+    private static final int INDEX_CONTACT_LIST = 1;
     private static final int INDEX_ME = 2;
-    private static final int INDEX_CHATROOM = 3;
+    private static final int INDEX_CHAT_ROOM = 3;
     private int indexPrevious;
     private int indexCurrent;
 
@@ -71,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
     private MainHandler mainHandler = new MainHandler();
     private NetWorkStateReceiver netWorkStateReceiver;
     private UdpThread udpThread;
-    private MessageSaver messageSaver;
 
     private ChatFragment chatHistoryFragment;
     private ContactFragment contactFragment;
@@ -104,7 +102,6 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         udpThread = UdpThread.getInstance();
         udpThread.setSocketCallback(this);
-        messageSaver = new MessageSaver();
 
         contactFragment = new ContactFragment();
         contactFragment.setContactCallback(this);
@@ -194,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                 case INDEX_CHAT_HISTORY:
                     showFragment(chatHistoryFragment);
                     break;
-                case INDEX_USERLIST:
+                case INDEX_CONTACT_LIST:
                     showFragment(contactFragment);
                     break;
                 case INDEX_ME:
@@ -261,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
         TabLayout.Tab userListTab = tabLayout.newTab();
         userListTab.setCustomView(makeTabView(R.drawable.tab_contact_list, R.string.tab_contactlist, false));
-        tabLayout.addTab(userListTab, INDEX_USERLIST);
+        tabLayout.addTab(userListTab, INDEX_CONTACT_LIST);
 
         TabLayout.Tab selfTab = tabLayout.newTab();
         selfTab.setCustomView(makeTabView(R.drawable.tab_profile, R.string.tab_self, false));
@@ -282,12 +279,12 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                     case INDEX_CHAT_HISTORY:
                         if (chatHistoryFragment == null) {
                             chatHistoryFragment = new ChatFragment();
-                            chatHistoryFragment.setUserListCallback(MainActivity.this);
+                            chatHistoryFragment.setContactListCallback(MainActivity.this);
                         }
                         chatHistoryFragment.setChattedUserList(chattedContactList);
                         showFragment(chatHistoryFragment);
                         break;
-                    case INDEX_USERLIST:
+                    case INDEX_CONTACT_LIST:
                         showFragment(contactFragment);
                         break;
                     case INDEX_ME:
@@ -340,8 +337,8 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
                 tabLayout.getTabAt(INDEX_CHAT_HISTORY).select();
                 indexCurrent = INDEX_CHAT_HISTORY;
             } else if (fragment == contactFragment) {
-                tabLayout.getTabAt(INDEX_USERLIST).select();
-                indexCurrent = INDEX_USERLIST;
+                tabLayout.getTabAt(INDEX_CONTACT_LIST).select();
+                indexCurrent = INDEX_CONTACT_LIST;
             } else if (fragment == settingFragment) {
                 tabLayout.getTabAt(INDEX_ME).select();
                 indexCurrent = INDEX_ME;
@@ -349,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
 
             if (fragment == chatRoomFragment) {
                 indexPrevious = indexCurrent;
-                indexCurrent = INDEX_CHATROOM;
+                indexCurrent = INDEX_CHAT_ROOM;
             } else {
                 udpThread.setChattingUser(null);
             }
@@ -456,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * @param list
      */
     @Override
-    public void freshChattedUserList(List<ContactBean> list) {
+    public void freshChattedContactList(List<ContactBean> list) {
         this.chattedContactList = list;
         mainHandler.sendEmptyMessage(MESSAGE_FRESH_CHATTED);
     }
@@ -465,9 +462,9 @@ public class MainActivity extends AppCompatActivity implements ISocketCallback, 
      * @param bean
      */
     @Override
-    public void onUserItemClick(BaseBean bean) {
+    public void onContactItemClick(BaseBean bean) {
 
-        Log.d(TAG, "onUserItemClick: bean=" + bean);
+        Log.d(TAG, "onContactItemClick: bean=" + bean);
 
         if (bean instanceof ContactBean) {
             ContactBean contactBean = (ContactBean) bean;

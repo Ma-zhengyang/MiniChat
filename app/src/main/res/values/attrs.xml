@@ -15,4 +15,10 @@
         <attr name="dayNightBackgroundDrawableAttr" format="string|reference"/><!--切换背景图片属性-->
     </declare-styleable>
 
+    <declare-styleable name="SwipeMenuLayout">
+        <attr name="swipeEnable" format="boolean"/>
+        <attr name="ios" format="boolean"/>
+        <attr name="leftSwipe" format="boolean"/>
+    </declare-styleable>
+
 </resources>

@@ -33,11 +33,8 @@ public class ChatFragment extends Fragment {
     private static final String TAG = "MiniChat." + ChatFragment.class.getSimpleName();
 
     private List<ContactBean> chattedContactList;
-    private Map<String, List<MessageBean>> messageBeanList;
-
-    private ChatAdapter chatHistoryAdapter;
-
-    private IContactCallback userListCallback;
+    private ChatAdapter chatAdapter;
+    private IContactCallback contactCallback;
 
     @BindView(R.id.tv_head)
     TextView tvHead;
@@ -51,14 +48,14 @@ public class ChatFragment extends Fragment {
 
     public void updateChattedUserList(List<ContactBean> chattedContactList) {
         Log.d(TAG, "updateChattedUserList: ");
-        if (chatHistoryAdapter != null) {
-            chatHistoryAdapter.updateChatedUserList(chattedContactList);
+        if (chatAdapter != null) {
+            chatAdapter.updateChattedUserList(chattedContactList);
         }
     }
 
-    public void setUserListCallback(IContactCallback userListCallback) {
-        Log.d(TAG, "setUserListCallback: ");
-        this.userListCallback = userListCallback;
+    public void setContactListCallback(IContactCallback userListCallback) {
+        Log.d(TAG, "setContactListCallback: ");
+        this.contactCallback = userListCallback;
     }
 
     @Override
@@ -81,9 +78,9 @@ public class ChatFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(layoutManager);
-        chatHistoryAdapter = new ChatAdapter(context, chattedContactList);
-        chatHistoryAdapter.setUserListCallback(userListCallback);
-        recyclerView.setAdapter(chatHistoryAdapter);
+        chatAdapter = new ChatAdapter(context, chattedContactList);
+        chatAdapter.setContactListCallback(contactCallback);
+        recyclerView.setAdapter(chatAdapter);
 
         return view;
     }

@@ -18,7 +18,7 @@
         android:layout_marginLeft="50dp">
 
         <ImageView
-            android:id="@+id/ivUserIcon"
+            android:id="@+id/ivContactIcon"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_alignParentRight="true"
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginRight="5dp"
-            android:layout_toLeftOf="@+id/ivUserIcon"
+            android:layout_toLeftOf="@+id/ivContactIcon"
             android:background="@drawable/chatto_bg"
             android:clickable="true"
             android:textColor="@color/black"

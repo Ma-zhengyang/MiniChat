@@ -64,8 +64,13 @@ public class SideBar extends View {
     }
 
     public void setSortLetters(String[] sortLetters) {
+        Log.d(TAG, "setSortLetters: sortLetters=" + sortLetters);
         if (sortLetters == null || sortLetters.length < 0) {
             return;
+        }
+        Log.d(TAG, "setSortLetters: sortLetters length=" + sortLetters.length);
+        for (String s : sortLetters) {
+            Log.d(TAG, "setSortLetters: s=" + s);
         }
         this.sortLetters = sortLetters;
         invalidate();
@@ -95,6 +100,10 @@ public class SideBar extends View {
 
         final int measuredWidth = resolveSizeAndState(dw, widthMeasureSpec, 0);
         final int measuredHeight = resolveSizeAndState(dh, heightMeasureSpec, 0);
+
+        Log.d(TAG, "onMeasure: measuredWidth=" + measuredWidth);
+        Log.d(TAG, "onMeasure: measuredHeight=" + measuredHeight);
+
         setMeasuredDimension(measuredWidth, measuredHeight);
     }
 

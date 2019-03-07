@@ -475,6 +475,12 @@ public class UdpThread extends Thread {
             }
         }
 
+        if (whoSend == null || whoReceiver == null) {
+            Log.e(TAG, "freshMessage: whoSend=" + whoSend);
+            Log.e(TAG, "freshMessage: whoReceiver=" + whoReceiver);
+            return;
+        }
+
         //把消息存入列表
         String key;
         if (senderDeviceCode.equals(selfDeviceCode)) {//我发给对方的,key是receiverDeviceCode
@@ -576,7 +582,7 @@ public class UdpThread extends Thread {
             }
         }
         if (listener != null) {
-            listener.freshChattedUserList(chattedContactList);
+            listener.freshChattedContactList(chattedContactList);
         }
 
         Log.d(TAG, "freshMessage: end");

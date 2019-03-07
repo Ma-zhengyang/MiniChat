@@ -10,6 +10,6 @@ public interface IContactCallback {
 
     //ContactFragment, ChatHistoryFragment中調用，MainActivity中实现
 
-    void onUserItemClick(BaseBean bean);
+    void onContactItemClick(BaseBean bean);
 
 }

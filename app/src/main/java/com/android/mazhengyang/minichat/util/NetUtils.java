@@ -5,16 +5,19 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.android.mazhengyang.minichat.R;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
-import java.util.Random;
 
 /**
  * Created by mazhengyang on 19-1-16.
@@ -96,9 +99,11 @@ public class NetUtils {
                 deviceCode = telephonyManager.getImei();
             }
             if (deviceCode == null) {
-                //只能做测试用
-                Random random = new Random();
-                deviceCode = String.valueOf(random.nextInt());
+                Log.d(TAG, "getDeviceCode: imei is null, try to get serial.");
+                deviceCode = Build.getSerial();
+            }
+            if (deviceCode == null) {
+                Toast.makeText(context, R.string.get_device_code_fail, Toast.LENGTH_LONG).show();
             }
             Log.d(TAG, "getDeviceCode: deviceCode=" + deviceCode);
         }

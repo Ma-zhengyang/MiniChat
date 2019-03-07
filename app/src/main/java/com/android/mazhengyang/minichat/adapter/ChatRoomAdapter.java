@@ -79,9 +79,9 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         if (messageBean.getSenderDeviceCode()
                 .equals(NetUtils.getDeviceCode(context))) {
-            ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
+            ((UserItemViewHolder) holder).ivContactIcon.setImageResource(R.drawable.user_self);
         } else {
-            ((UserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
+            ((UserItemViewHolder) holder).ivContactIcon.setImageResource(R.drawable.user_friend);
         }
 
     }
@@ -116,8 +116,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         TextView tvTime;
         @BindView(R.id.tvMessage)
         TextView tvMessage;
-        @BindView(R.id.ivUserIcon)
-        ImageView ivUserIcon;
+        @BindView(R.id.ivContactIcon)
+        ImageView ivContactIcon;
 
         public UserItemViewHolder(View itemView) {
             super(itemView);

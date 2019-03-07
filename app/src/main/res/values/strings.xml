@@ -12,7 +12,10 @@
     <string name="daynight_mode_change">夜间模式</string>
     <string name="setting_sound">声音</string>
     <string name="setting_vibrate">震动</string>
+    <string name="msg_mark_unread">标为未读</string>
+    <string name="msg_mark_delete">删除</string>
 
+    <string name="get_device_code_fail">获取设备标识失败</string>
     <string name="granted_permission">请先打开 %1$s 权限</string>
     <string name="wanshan">完善中...</string>
 

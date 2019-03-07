@@ -83,7 +83,7 @@ public class BadgeView extends TextView {
 
     public void setBackground(int dipRadius, int badgeColor) {
         int radius = dip2Px(dipRadius);
-        float[] radiusArray = new float[] { radius, radius, radius, radius, radius, radius, radius, radius };
+        float[] radiusArray = new float[]{radius, radius, radius, radius, radius, radius, radius, radius};
 
         RoundRectShape roundRect = new RoundRectShape(radiusArray, null, null);
         ShapeDrawable bgDrawable = new ShapeDrawable(roundRect);
@@ -164,7 +164,7 @@ public class BadgeView extends TextView {
 
     public int[] getBadgeMargin() {
         LayoutParams params = (LayoutParams) getLayoutParams();
-        return new int[] { params.leftMargin, params.topMargin, params.rightMargin, params.bottomMargin };
+        return new int[]{params.leftMargin, params.topMargin, params.rightMargin, params.bottomMargin};
     }
 
     public void incrementBadgeCount(int increment) {
@@ -220,7 +220,7 @@ public class BadgeView extends TextView {
 
             badgeContainer.setLayoutParams(parentLayoutParams);
             target.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
             parentContainer.addView(badgeContainer, groupIndex, parentLayoutParams);
             badgeContainer.addView(target);

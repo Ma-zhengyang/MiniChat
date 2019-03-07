@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,7 +16,7 @@ import com.android.mazhengyang.minichat.bean.ContactBean;
 import com.android.mazhengyang.minichat.model.IContactCallback;
 import com.android.mazhengyang.minichat.util.NetUtils;
 import com.android.mazhengyang.minichat.widget.BadgeView;
-import com.daimajia.swipe.SwipeLayout;
+import com.android.mazhengyang.minichat.widget.SwipeMenuLayout;
 
 import java.util.List;
 
@@ -32,16 +33,15 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private Context context;
     private List<ContactBean> chattedContactList;
+    private IContactCallback contactListCallback;
 
-    private IContactCallback userListCallback;
-
-    public void setUserListCallback(IContactCallback userListCallback) {
-        Log.d(TAG, "setUserListCallback: userListCallback=" + userListCallback);
-        this.userListCallback = userListCallback;
+    public void setContactListCallback(IContactCallback contactListCallback) {
+        Log.d(TAG, "setContactListCallback: setContactListCallback=" + contactListCallback);
+        this.contactListCallback = contactListCallback;
     }
 
-    public void updateChatedUserList(List<ContactBean> chattedContactList) {
-        Log.d(TAG, "updateChatedUserList: userListCallback=" + userListCallback);
+    public void updateChattedUserList(List<ContactBean> chattedContactList) {
+        Log.d(TAG, "updateChattedUserList: userListCallback=" + contactListCallback);
         this.chattedContactList = chattedContactList;
         notifyDataSetChanged();
     }
@@ -57,7 +57,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Log.d(TAG, "onCreateViewHolder: ");
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_chat, parent, false);
-        ChatedUserItemViewHolder vh = new ChatedUserItemViewHolder(v);
+        ContactItemViewHolder vh = new ContactItemViewHolder(v);
         return vh;
     }
 
@@ -72,16 +72,15 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         if (contactBean.getDeviceCode()
                 .equals(NetUtils.getDeviceCode(context))) {
-            ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_self);
+            ((ContactItemViewHolder) holder).ivContactIcon.setImageResource(R.drawable.user_self);
         } else {
-            ((ChatedUserItemViewHolder) holder).ivUserIcon.setImageResource(R.drawable.user_friend);
+            ((ContactItemViewHolder) holder).ivContactIcon.setImageResource(R.drawable.user_friend);
         }
 
-        ((ChatedUserItemViewHolder) holder).bvUnReadMsgCount.setBadgeCount(contactBean.getUnReadMsgCount());
-        ((ChatedUserItemViewHolder) holder).tvUserName.setText(contactBean.getUserName());
-        ((ChatedUserItemViewHolder) holder).tvRecentMessage.setText(contactBean.getRecentMsg());
-        ((ChatedUserItemViewHolder) holder).tvRecentTime.setText(contactBean.getRecentTime());
-
+        ((ContactItemViewHolder) holder).bvUnReadMsgCount.setBadgeCount(contactBean.getUnReadMsgCount());
+        ((ContactItemViewHolder) holder).tvContactName.setText(contactBean.getUserName());
+        ((ContactItemViewHolder) holder).tvRecentMessage.setText(contactBean.getRecentMsg());
+        ((ContactItemViewHolder) holder).tvRecentTime.setText(contactBean.getRecentTime());
     }
 
     @Override
@@ -95,44 +94,57 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return count;
     }
 
-    public class ChatedUserItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        @BindView(R.id.swipelayout)
-        SwipeLayout swipeLayout;
-        @BindView(R.id.ivUserIcon)
-        ImageView ivUserIcon;
+    public class ContactItemViewHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
+
+        @BindView(R.id.swipeMenuLayout)
+        SwipeMenuLayout swipeMenuLayout;
+        @BindView(R.id.msg_layout)
+        View msgLayout;
+        @BindView(R.id.ivContactIcon)
+        ImageView ivContactIcon;
         @BindView(R.id.bvUnReadMsgCount)
         BadgeView bvUnReadMsgCount;
-        @BindView(R.id.tvUserName)
-        TextView tvUserName;
+        @BindView(R.id.tvContactName)
+        TextView tvContactName;
         @BindView(R.id.tvRecentMessage)
         TextView tvRecentMessage;
         @BindView(R.id.tvRecentTime)
         TextView tvRecentTime;
+        @BindView(R.id.btnUnRead)
+        Button btnUnRead;
+        @BindView(R.id.btnDelete)
+        Button btnDelete;
 
-        @BindView(R.id.delete)
-        ImageView deleteBtn;
-
-        public ChatedUserItemViewHolder(View itemView) {
+        public ContactItemViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
-            itemView.setOnClickListener(this);
-
-            swipeLayout.setShowMode(SwipeLayout.ShowMode.LayDown);
-            swipeLayout.addDrag(SwipeLayout.DragEdge.Right, swipeLayout.findViewWithTag("controlView"));
-            deleteBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(context, "delete click", Toast.LENGTH_SHORT).show();
-                }
-            });
+            msgLayout.setOnClickListener(this);
+            btnUnRead.setOnClickListener(this);
+            btnDelete.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View v) {
-            if (userListCallback != null) {
-                userListCallback.onUserItemClick(chattedContactList.get(getPosition()));
+            int position = getPosition();
+            Log.d(TAG, "onClick: position=" + position);
+            switch (v.getId()) {
+                case R.id.btnUnRead:
+                    swipeMenuLayout.quickClose();
+                    break;
+                case R.id.btnDelete:
+                    swipeMenuLayout.quickClose();
+                    chattedContactList.remove(position);
+                    notifyItemRemoved(position);
+                    break;
+                case R.id.msg_layout:
+                    if (contactListCallback != null) {
+                        ContactBean contactBean = chattedContactList.get(position);
+                        contactListCallback.onContactItemClick(contactBean);
+                    }
             }
+
         }
     }
 }

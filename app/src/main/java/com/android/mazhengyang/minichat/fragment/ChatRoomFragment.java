@@ -155,9 +155,9 @@ public class ChatRoomFragment extends Fragment {
         int position = messageBeanList.size() - 1;
         int firstItem = linearLayoutManager.findFirstVisibleItemPosition();
         int lastItem = linearLayoutManager.findLastVisibleItemPosition();
-        Log.d(TAG, "freshMessageList: firstItem=" + firstItem);
-        Log.d(TAG, "freshMessageList: lastItem=" + lastItem);
-        Log.d(TAG, "moveToPosition: positon =" + position);
+        Log.d(TAG, "moveToLastPosition: firstItem=" + firstItem);
+        Log.d(TAG, "moveToLastPosition: lastItem=" + lastItem);
+        Log.d(TAG, "moveToPosition: position =" + position);
 
         if (position <= firstItem) {
             recyclerView.scrollToPosition(position);
